@@ -54,7 +54,7 @@ L:RegisterTranslations("enUS", function() return {
 ---------------------------------
 
 -- module variables
-module.revision = 20003 -- To be overridden by the module!
+module.revision = 20011 -- To be overridden by the module!
 module.enabletrigger = module.translatedName -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
 module.toggleoptions = {"silence", "enrage", "rain", "bosskill"}
@@ -63,7 +63,7 @@ module.toggleoptions = {"silence", "enrage", "rain", "bosskill"}
 -- locals
 local timer = {
 	enrage = 60,
-	silence = 20,
+	silence = 30,
 	rainTick = 2,
 	rainDuration = 10,
 }
