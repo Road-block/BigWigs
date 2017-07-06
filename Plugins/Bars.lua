@@ -148,22 +148,19 @@ BigWigsBars.defaultDB = {
 	growup = false,
 	scale = 1.0,
 	texture = "BantoBar",
-    
-    posx = nil,
-    posy = nil,
-    
-    hpPosx = nil,
-    hpPosy = nil,
-    
-    emphasize = true,
+  posx = nil,
+  posy = nil,
+  hpPosx = nil,
+  hpPosy = nil,
+  emphasize = true,
 	emphasizeMove = true,
-    emphasizeFlash = true,
+  emphasizeFlash = true,
 	emphasizePosX = nil,
 	emphasizePosY = nil,    
-    emphasizeScale = 1.5,
-    emphasizeGrowup = false,
+  emphasizeScale = 1.5,
+  emphasizeGrowup = false,
     
-    duration = 0.5,
+  duration = 0.5,
 
 	width = nil,
 	height = nil,
@@ -353,9 +350,9 @@ end
 function BigWigsBars:OnEnable()
 	if not surface:Fetch(self.db.profile.texture) then self.db.profile.texture = "BantoBar" end
 	self.frames = {}
-    self:SetupFrames()
-    self:SetupFrames(true)
-    self:SetupHPBarFrame()
+  self:SetupFrames()
+  self:SetupFrames(true)
+  self:SetupHPBarFrame()
 	self:RegisterEvent("BigWigs_ShowAnchors")
 	self:RegisterEvent("BigWigs_HideAnchors")
 	self:RegisterEvent("BigWigs_StartBar")
@@ -1088,7 +1085,7 @@ end
 function BigWigsBars:SetupHPBarFrame()
 	if self.frames.hpAnchor then return end
     
-    local f, t	
+  local f, t,_	
 
 	f, _, _ = GameFontNormal:GetFont()
 
@@ -1211,9 +1208,9 @@ function BigWigsBars:SetupHPBarFrame()
     local x = self.db.profile.hpPosx
     local y = self.db.profile.hpPosy
     if x and y then
-        local s = self.frames.anchor:GetEffectiveScale()
-        self.frames.anchor:ClearAllPoints()
-        self.frames.anchor:SetPoint("TOP", UIParent, "TOP", 0, 0)--self.frames.anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+        local s = self.frames.hpAnchor:GetEffectiveScale()
+        self.frames.hpAnchor:ClearAllPoints()
+        self.frames.hpAnchor:SetPoint("TOP", UIParent, "TOP", 0, 0)--self.frames.anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
     else
         self:ResetAnchor("normal")
     end
@@ -1256,8 +1253,8 @@ function BigWigsBars:ResetAnchor(specific)
 end
 
 function BigWigsBars:SavePosition()
-    if not self.frames.anchor then self:SetupFrames() end
-    if not self.frames.hpAnchor then self:SetupHPBarFrame() end
+  if not self.frames.anchor then self:SetupFrames() end
+  if not self.frames.hpAnchor then self:SetupHPBarFrame() end
 
 	local s = self.frames.anchor:GetEffectiveScale()
 	self.db.profile.posx = self.frames.anchor:GetLeft() * s
@@ -1271,7 +1268,7 @@ function BigWigsBars:SavePosition()
 	end	
     
     -- hp anchor
-    s = self.frames.hpAnchor:GetEffectiveScale()
+  s = self.frames.hpAnchor:GetEffectiveScale()
 	self.db.profile.hpPosx = self.frames.hpAnchor:GetLeft() * s
 	self.db.profile.hpPosy = self.frames.hpAnchor:GetTop() * s
     
