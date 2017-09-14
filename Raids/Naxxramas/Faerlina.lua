@@ -62,7 +62,8 @@ module.toggleoptions = {"silence", "enrage", "rain", "bosskill"}
 
 -- locals
 local timer = {
-	enrage = 60,
+	firstEnrage = 60,
+	enrage = 61,
 	silence = 30,
 	rainTick = 2,
 	rainDuration = 10,
@@ -73,8 +74,8 @@ local icon = {
 	rain = "Spell_Shadow_RainOfFire",
 }
 local syncName = {
-	enrage = "FaerlinaEnrage",
-	silence = "FaerlinaSilence",
+	enrage = "FaerlinaEnrage"..module.revision,
+	silence = "FaerlinaSilence"..module.revision,
 }
 
 local timeEnrageStarted = 0
@@ -118,8 +119,8 @@ end
 function module:OnEngage()
 	self:Message(L["startwarn"], "Orange")
 	if self.db.profile.enrage then
-		self:DelayedMessage(timer.enrage - 15, L["enragewarn15sec"], "Important")
-		self:Bar(L["enragebar"], timer.enrage, icon.enrage)
+		self:DelayedMessage(timer.firstEnrage - 15, L["enragewarn15sec"], "Important")
+		self:Bar(L["enragebar"], timer.firstEnrage, icon.enrage)
 	end
 	timeEnrageStarted = GetTime()
 end

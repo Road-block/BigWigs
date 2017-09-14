@@ -10,7 +10,7 @@ Dependencies: AceLibrary, AceLocale-2.2
 ]]
 
 local MAJOR_VERSION = "Babble-Boss-2.2"
-local MINOR_VERSION = 20005
+local MINOR_VERSION = 20006
 
 if not AceLibrary then error(MAJOR_VERSION .. " requires AceLibrary") end
 
@@ -108,6 +108,7 @@ BabbleBoss:RegisterTranslations("enUS", function()
 		["Eye of C'Thun"] = true,
 		["C'Thun"] = true,
 		["Anubisath Defender"] = true,
+		["Anubisath Warder"] = true,
 		["Fankriss the Unyielding"] = true,
 		["Princess Huhuran"] = true,
 		["Ouro"] = true,

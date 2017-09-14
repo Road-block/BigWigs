@@ -123,9 +123,9 @@ L:RegisterTranslations("enUS", function() return {
 	frostblast_warning = "Frost Blast!",
 	frostblast_soon_message = "Possible Frost Blast in ~5sec!",
 
-	phase2_mcfrostblast_warning = "Possible Frost Blast and Mind Control in ~5sec!",
+	phase2_frostblast_warning = "Possible Frost Blast in ~5sec!",
+	phase2_mc_warning = "Possible Mind Control in ~5sec!",
 	phase2_detonate_warning = "Detonate Mana in ~5sec!",
-	mcfrostblast_bar = "First Frost Blast and MC",
 
 	detonate_trigger = "^([^%s]+) ([^%s]+) afflicted by Detonate Mana",
 	detonate_bar = "Detonate Mana - %s",
@@ -160,17 +160,18 @@ module.proximitySilent = true
 local timer = {
 	phase1 = 320,
 	firstFrostboltVolley = 30,
-	frostboltVolley = 15,
+	frostboltVolley = {15,30},
 	frostbolt = 2,
 	phase2 = 15,
-	firstDetonate = 35,
-	detonate = 20,
-	firstFrostblast = 45,
-	mindcontrol = 60,
-	guardians = 16,
-	frostblast = 30,
+	firstDetonate = 20,
 	detonate = 5,
-	nextDetonate = 20,
+	nextDetonate = {20,25},
+	firstFrostblast = 50,
+	frostblast = {55,65},
+	firstMindcontrol = 60,
+	mindcontrol = {60,90},
+	firstGuardians = 5,
+	guardians = 7,
 }
 local icon = {
 	abomination = "",
@@ -185,17 +186,17 @@ local icon = {
 	frostbolt = "Spell_Frost_FrostBolt02",
 }
 local syncName = {
-	detonate = "KelDetonate",
-	frostblast = "KelFrostBlast",
-	frostbolt = "KelFrostbolt",
-	frostboltOver = "KelFrostboltStop",
-	fissure = "KelFissure",
-	mindcontrol = "KelMindControl",
-	abomination = "KelAddDiesAbom",
-	soulWeaver = "KelAddDiesSoul",
-	phase2 = "KelPhase2",
-	phase3 = "KelPhase3",
-	guardians = "KelGuardians",
+	detonate = "KelDetonate"..module.revision,
+	frostblast = "KelFrostBlast"..module.revision,
+	frostbolt = "KelFrostbolt"..module.revision,
+	frostboltOver = "KelFrostboltStop"..module.revision,
+	fissure = "KelFissure"..module.revision,
+	mindcontrol = "KelMindControl"..module.revision,
+	abomination = "KelAddDiesAbom"..module.revision,
+	soulWeaver = "KelAddDiesSoul"..module.revision,
+	phase2 = "KelPhase2"..module.revision,
+	phase3 = "KelPhase3"..module.revision,
+	guardians = "KelGuardians"..module.revision,
 }
 
 local timeLastFrostboltVolley = 0    -- saves time of first frostbolt
@@ -365,7 +366,7 @@ function module:Affliction(msg)
 
 		if numFrostboltVolleyHits == 4 then
 
-			self:Bar(L["frostbolt_volley"], timer.frostboltVolley, icon.frostboltVolley)
+			self:IntervalBar(L["frostbolt_volley"], timer.frostboltVolley[1], timer.frostboltVolley[2], icon.frostboltVolley)
 
 			--[[self:CancelScheduledEvent("bwfbvolley30")
 			self:CancelScheduledEvent("bwfbvolley45")
@@ -375,7 +376,7 @@ function module:Affliction(msg)
 			self:ScheduleEvent("bwfbvolley60", self.Volley, 45, self) ]] -- why 3 times?
 
 			self:CancelDelayedBar(L["frostbolt_volley"])
-			self:DelayedBar(timer.frostboltVolley, L["frostbolt_volley"], timer.frostboltVolley, icon.frostboltVolley)
+			self:DelayedIntervalBar(timer.frostboltVolley[2], L["frostbolt_volley"], timer.frostboltVolley[1], timer.frostboltVolley[2], icon.frostboltVolley)
 		end
 	end
 end
@@ -444,11 +445,13 @@ end
 
 function module:Phase2()
 	self:Bar(L["phase2_bar"], timer.phase2, icon.phase2)
-	self:Bar(L["detonate_possible_bar"], timer.firstDetonate, icon.detonate)
-	self:Bar(L["mcfrostblast_bar"], timer.firstFrostblast, icon.frostblast)
+	self:DelayedBar(timer.phase2, L["mc_bar"], timer.firstMindcontrol, icon.mindcontrol)
+	self:DelayedBar(timer.phase2, L["detonate_possible_bar"], timer.firstDetonate, icon.detonate)
+	self:DelayedBar(timer.phase2, L["frostblast_bar"], timer.firstFrostblast, icon.frostblast)
 	self:DelayedMessage(timer.phase2, L["phase2_warning"], "Important")
-	self:DelayedMessage(timer.firstDetonate - 5, L["phase2_detonate_warning"], "Important")
-	self:DelayedMessage(timer.firstFrostblast - 5, L["phase2_mcfrostblast_warning"], "Important")
+	self:DelayedMessage(timer.firstDetonate + timer.phase2 - 5, L["phase2_detonate_warning"], "Important")
+	self:DelayedMessage(timer.firstFrostblast  + timer.phase2 - 5, L["phase2_frostblast_warning"], "Important")
+	self:DelayedMessage(timer.firstMindcontrol  + timer.phase2 - 5, L["phase2_mc_warning"], "Important")
 
 	if self.db.profile.fbvolley then
 		self:Bar(L["frostbolt_volley"], timer.firstFrostboltVolley, icon.frostboltVolley)
@@ -469,7 +472,7 @@ end
 
 function module:MindControl()
 	self:Message(L["mc_warning"], "Urgent")
-	self:Bar(L["mc_bar"], timer.mindcontrol, icon.mindcontrol)
+	self:IntervalBar(L["mc_bar"], timer.mindcontrol[1], timer.mindcontrol[2], icon.mindcontrol)
 
 	self:KTM_Reset()
 end
@@ -477,14 +480,18 @@ end
 function module:Guardians()
 	if self.db.profile.guardians then
 		self:Message(L["guardians_warning"], "Important")
-		self:Bar(L["guardians_bar"], timer.guardians, icon.guardians)
+		self:Bar(L["guardians_bar"], timer.firstGuardians, icon.guardians)
+		self:DelayedBar(timer.firstGuardians, L["guardians_bar"], timer.guardians, icon.guardians)
+		for i = 1,4 do
+			self:DelayedBar(timer.firstGuardians+timer.guardians*1, L["guardians_bar"], timer.guardians, icon.guardians)
+		end
 	end
 end
 
 function module:FrostBlast()
 	self:Message(L["frostblast_warning"], "Attention")
-	self:DelayedMessage(timer.frostblast - 5, L["frostblast_soon_message"])
-	self:Bar(L["frostblast_bar"], timer.frostblast, icon.frostblast)
+	self:DelayedMessage(timer.frostblast[1] - 5, L["frostblast_soon_message"])
+	self:IntervalBar(L["frostblast_bar"], timer.frostblast[1], timer.frostblast[2], icon.frostblast)
 end
 
 function module:Detonate(name)
@@ -494,7 +501,7 @@ function module:Detonate(name)
 			self:Icon(name)
 		end
 		self:Bar(string.format(L["detonate_bar"], name), timer.detonate, icon.detonate)
-		self:Bar(L["detonate_possible_bar"], timer.nextDetonate, icon.detonate)
+		self:IntervalBar(L["detonate_possible_bar"], timer.nextDetonate[1], timer.nextDetonate[2], icon.detonate)
 	end
 end
 

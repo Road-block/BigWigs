@@ -73,8 +73,8 @@ module.toggleoptions = {"berserk", "lifedrain", "deepbreath", "icebolt", "bosski
 local timer = {
 	berserk = 900,
 	deepbreathInc = 23,
-	deepbreath = 7,
-	lifedrainAfterFlight = 14,
+	deepbreath = 6,
+	lifedrainAfterFlight = 24,
 	lifedrain = 24,
 	groundPhase = 50,
 }
@@ -85,8 +85,8 @@ local icon = {
 	berserk = "INV_Shield_01",
 }
 local syncName = {
-	lifedrain = "SapphironLifeDrain",
-	flight = "SapphironFlight",
+	lifedrain = "SapphironLifeDrain"..module.revision,
+	flight = "SapphironFlight"..module.revision,
 }
 
 local timeLifeDrain = nil
@@ -252,12 +252,12 @@ function module:RepeatedTargetScanner()
 
 	-- If we have a cached unit (which we will if we found someone with the boss
 	-- as target), then check if he still has the same target
-	if cachedUnitId and UnitExists(cachedUnitId) and UnitName(cachedUnitId) == boss then
+	if cachedUnitId and UnitExists(cachedUnitId) and UnitName(cachedUnitId) == self.translatedName then
 		found = true
 	end
 
 	-- Check the players target
-	if not found and UnitExists("target") and UnitName("target") == boss then
+	if not found and UnitExists("target") and UnitName("target") == self.translatedName then
 		cachedUnitId = "target"
 		found = true
 	end
@@ -266,7 +266,7 @@ function module:RepeatedTargetScanner()
 	if not found then
 		for i = 1, GetNumRaidMembers() do
 			local unit = string.format("raid%dtarget", i)
-			if UnitExists(unit) and UnitName(unit) == boss then
+			if UnitExists(unit) and UnitName(unit) == self.translatedName then
 				cachedUnitId = unit
 				found = true
 				break

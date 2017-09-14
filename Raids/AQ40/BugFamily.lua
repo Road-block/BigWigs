@@ -165,10 +165,13 @@ module.toggleoptions = {"panic", "toxicvolley", "heal", "announce", "deathspecia
 
 -- locals
 local timer = {
-	firstPanic = 10,
+	earliestFirstPanic = 10,
+	latestFirstPanic = 20,
 	panic = 20,
-	firstVolley = 8,
-	volley = 8,
+	earliestFirstVolley = 8,
+	latestFirstVolley = 10,
+	earliestVolley = 8,
+	latestVolley = 14,
 	enrage = 900,
 	heal = 2,
 }
@@ -249,12 +252,12 @@ end
 -- called after boss is engaged
 function module:OnEngage()
 	if self.db.profile.panic then
-		self:Bar(L["first_panic_bar"], timer.firstPanic, icon.panic, true, "white")
+		self:IntervalBar(L["first_panic_bar"], timer.earliestFirstPanic, timer.latestFirstPanic, icon.panic, true, "white")
 		--self:DelayedMessage(timer.firstPanic - 3, L["panic_message"], "Urgent", true, "Alarm")
 	end
 	if self.db.profile.toxicvolley then
-		self:Bar(L["toxicvolley_bar"], timer.firstVolley, icon.volley, true, "green")
-		self:DelayedMessage(timer.firstVolley - 3, L["toxicvolley_message"], "Urgent")
+		self:IntervalBar(L["toxicvolley_bar"], timer.earliestFirstVolley, timer.latestFirstVolley, icon.volley, true, "green")
+		self:DelayedMessage(timer.earliestFirstVolley - 3, L["toxicvolley_message"], "Urgent")
 	end
 	if self.db.profile.enrage then
 		self:Bar(L["enrage_bar"], timer.enrage, icon.enrage, true, "red")
@@ -361,7 +364,7 @@ end
 
 function module:Volley()
 	if self.db.profile.toxicvolley then
-		self:Bar(L["toxicvolley_bar"], timer.volley, icon.volley, true, "green")
+		self:IntervalBar(L["toxicvolley_bar"], timer.earliestVolley, timer.latestVolley, icon.volley, true, "green")
 		--self:DelayedMessage(timer.firstVolley - 3, L["toxicvolley_message"], "Urgent")
 	end
 end
@@ -384,6 +387,7 @@ end
 
 function module:Panic()
 	if self.db.profile.panic then
+		self:RemoveBar(L["first_panic_bar"])
 		self:Bar(L["panic_bar"], timer.panic, icon.panic, true, "white")
 		self:Message(L["panic_message"], "Urgent", true, "Alarm")
 	end

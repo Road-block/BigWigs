@@ -32,6 +32,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Options for the ignite Display."] = true,
 	["Show frame"] = true,
 	["Show the ignite frame."] = true,
+	["Lock frame"] = true,
+	["Lock the ignite frame."] = true,
 	["Reset position"] = true,
 	["Reset the frame position."] = true,
 	["Send Stop"] = true,
@@ -113,6 +115,7 @@ BigWigsIgnite.defaultDB = {
 	isVisible = nil,
 	showWarnings = nil,
 	showalways = nil,
+	lock = false,
 }
 BigWigsIgnite.stacks = 0
 BigWigsIgnite.damage = 0
@@ -147,7 +150,7 @@ BigWigsIgnite.consoleOptions = {
 			type = "toggle",
 			name = L["Show frame"],
 			desc = L["Show the ignite frame."],
-			order = 100,
+			order = 99,
 			get = function()
 				return BigWigsIgnite.db.profile.isVisible
 			end,
@@ -157,6 +160,23 @@ BigWigsIgnite.consoleOptions = {
 					BigWigsIgnite:Show()
 				else
 					BigWigsIgnite:Hide()
+				end
+			end,
+		},
+		lock = {
+			type = "toggle",
+			name = L["Lock frame"],
+			desc = L["Lock the ignite frame."],
+			order = 100,
+			get = function()
+				return BigWigsIgnite.db.profile.lock
+			end,
+			set = function(v)
+				BigWigsIgnite.db.profile.lock = v
+				if v then
+					BigWigsIgnite:Lock()
+				else
+					BigWigsIgnite:Unlock()
 				end
 			end,
 		},
@@ -261,6 +281,20 @@ function BigWigsIgnite:Hide()
 		frame:Hide()
 		--self:DebugMessage("BigWigsIgnite:Hide()")
 		BigWigsIgnite.db.profile.isVisible = false
+	end
+end
+
+function BigWigsIgnite:Lock()
+	if frame then
+		frame:EnableMouse(false)
+		frame:SetMovable(false)
+	end
+end
+
+function BigWigsIgnite:Unlock()
+	if frame then
+		frame:EnableMouse(true)
+		frame:SetMovable(true)
 	end
 end
 
@@ -605,6 +639,10 @@ function BigWigsIgnite:SetupFrames()
 	frame:SetClampedToScreen(true)
 	frame:RegisterForDrag("LeftButton")
 	frame:SetMovable(true)
+	if self.db.profile.lock then
+		frame:EnableMouse(false)
+		frame:SetMovable(false)
+	end
 	frame:SetScript("OnDragStart", function() this:StartMoving() end)
 	frame:SetScript("OnDragStop", function()
 		this:StopMovingOrSizing()

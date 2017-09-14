@@ -86,6 +86,7 @@ Plugins\Ignite.lua
 Plugins\Farclip.lua
 Plugins\WorldBuffTimers.lua
 Plugins\ScorchTimer.lua
+Plugins\FRBuffMacro.lua
 
 Raids\ZG\Arlokk.lua
 Raids\ZG\Jeklik.lua
@@ -120,6 +121,7 @@ Raids\AQ40\Defenders.lua
 Raids\AQ40\Twins.lua
 Raids\AQ40\Cthun.lua
 Raids\AQ40\Viscidus.lua
+Raids\AQ40\Warder.lua
 
 Raids\BWL\Chromaggus.lua
 Raids\BWL\Ebonroc.lua
@@ -148,9 +150,8 @@ Raids\Other\Emeriss.lua
 Raids\Other\Lethon.lua
 Raids\Other\Taerar.lua
 Raids\Other\Ysondre.lua
-
+Raids\Other\Gordok.lua
 #Raids\Other\Boar.lua
-
 Raids\Onyxia\Onyxia.lua
 
 Raids\Naxxramas\Anubrekhan.lua

@@ -79,6 +79,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Close Players"] = true,
 	["Options for the Proximity Display."] = true,
 	["|cff777777Nobody|r"] = true,
+	["Lock frame"] = true,
+	["Lock the proximity frame."] = true,
 	["Sound"] = true,
 	["Play sound on proximity."] = true,
 	["Disabled"] = true,
@@ -133,6 +135,7 @@ BigWigsProximity.defaultDB = {
 	posy = nil,
 	sound = true,
 	disabled = nil,
+	lock = false,
 }
 --BigWigsProximity.external = true
 
@@ -157,6 +160,23 @@ BigWigsProximity.consoleOptions = {
 		end
 	end,
 	args = {
+		lock = {
+			type = "toggle",
+			name = L["Lock frame"],
+			desc = L["Lock the proximity frame."],
+			order = 99,
+			get = function()
+				return BigWigsProximity.db.profile.lock
+			end,
+			set = function(v)
+				BigWigsProximity.db.profile.lock = v
+				if v then
+					BigWigsProximity:Lock()
+				else
+					BigWigsProximity:Unlock()
+				end
+			end,
+		},
 		sound = {
 			type = "toggle",
 			name = L["Sound"],
@@ -224,6 +244,19 @@ end
 -----------------------------------------------------------------------
 --      Event Handlers
 -----------------------------------------------------------------------
+function BigWigsProximity:Lock()
+	if anchor then
+		anchor:EnableMouse(false)
+		anchor:SetMovable(false)
+	end
+end
+
+function BigWigsProximity:Unlock()
+	if anchor then
+		anchor:EnableMouse(true)
+		anchor:SetMovable(true)
+	end
+end
 
 function BigWigsProximity:BigWigs_ShowProximity(moduleName)
 	--[[if active then
@@ -392,6 +425,10 @@ function BigWigsProximity:SetupFrames()
 	frame:SetClampedToScreen(true)
 	frame:RegisterForDrag("LeftButton")
 	frame:SetMovable(true)
+	if self.db.profile.lock then
+		frame:EnableMouse(false)
+		frame:SetMovable(false)
+	end
 	frame:SetScript("OnDragStart", function() this:StartMoving() end)
 	frame:SetScript("OnDragStop", function()
 		this:StopMovingOrSizing()

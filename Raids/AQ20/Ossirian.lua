@@ -101,7 +101,8 @@ local timer = {
 	supreme = 45,
 	firstCyclone = 20,
 	cyclone = 15,
-	warstomp = 25,
+	earliestWarstomp = 25,
+	latestWarstomp = 35,
 }
 local icon = {
 	supreme = "Spell_Shadow_CurseOfTounges",
@@ -154,7 +155,7 @@ end
 -- called after boss is engaged
 function module:OnEngage()
 	self:Bar(L["Cyclone"], timer.firstCyclone, icon.cyclone)
-	self:Bar(L["WarStomp"], timer.warstomp, icon.warstomp)
+	self:Bar(L["WarStomp"], timer.earliestWarstomp, icon.warstomp)
 end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
@@ -204,7 +205,7 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 	elseif sync == syncName.cyclone then
 		self:Cyclone()
 	elseif sync == syncName.warstomp then
-		self:Bar(L["WarStomp"], timer.warstomp, icon.warstomp)
+		self:IntervalBar(L["WarStomp"], timer.earliestWarstomp, timer.latestWarstomp, icon.warstomp)
 	end
 end
 

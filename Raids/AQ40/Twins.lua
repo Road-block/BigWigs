@@ -152,7 +152,8 @@ module.toggleoptions = {"bug", "teleport", "enrage", "heal", "blizzard", "bosski
 
 -- locals
 local timer = {
-	teleport = 30,
+	earliestTeleport = 30,
+	latestTeleport = 40,
 	enrage = 900,
 	blizzard = 10,
 }
@@ -296,16 +297,16 @@ end
 
 function module:Teleport()
 	if self.db.profile.teleport then
-		self:Bar(L["bartext"], timer.teleport, icon.teleport)
+		self:IntervalBar(L["bartext"], timer.earliestTeleport, timer.latestTeleport, icon.teleport)
 
 		--self:DelayedSync(timer.teleport, syncName.teleport_old)
 		--self:DelayedSync(timer.teleport, syncName.teleport)
 		self:KTM_Reset()
 
-		self:DelayedSound(timer.teleport - 10, "Ten")
-		self:DelayedSound(timer.teleport - 3, "Three")
-		self:DelayedSound(timer.teleport - 2, "Two")
-		self:DelayedSound(timer.teleport - 1, "One")
-		self:DelayedMessage(timer.teleport - 0.1, L["portwarn"], "Attention", false, "Alarm")
+		self:DelayedSound(timer.earliestTeleport - 10, "Ten")
+		self:DelayedSound(timer.earliestTeleport - 3, "Three")
+		self:DelayedSound(timer.earliestTeleport - 2, "Two")
+		self:DelayedSound(timer.earliestTeleport - 1, "One")
+		self:DelayedMessage(timer.earliestTeleport - 0.1, L["portwarn"], "Attention", false, "Alarm")
 	end
 end

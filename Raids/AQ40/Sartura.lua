@@ -120,9 +120,12 @@ module.toggleoptions = {"whirlwind", "adds", "enrage", "berserk", "bosskill"}
 -- locals
 local timer = {
 	berserk = 600,
+	earliestFirstWhirlwind = 8,
+	latestFirstWhirlwind = 12,
 	firstWhirlwind = 8,
 	whirlwind = 15,
-	nextWhirlwind = 5,
+	earliestNextWhirlwind = 5,
+	latestNextWhirlwind = 10,
 }
 local icon = {
 	berserk = "Spell_Shadow_UnholyFrenzy",
@@ -179,8 +182,8 @@ function module:OnEngage()
 		self:DelayedMessage(timer.berserk - 10, L["warn6"], "Important", nil, nil, true)
 	end
 	if self.db.profile.whirlwind then
-		self:Bar(L["whirlwindfirstbartext"], timer.firstWhirlwind, icon.whirlwind)
-		self:DelayedMessage(timer.firstWhirlwind - 3, L["whirlwindinctext"], "Attention", true, "Alarm")
+		self:IntervalBar(L["whirlwindfirstbartext"], timer.earliestFirstWhirlwind, timer.latestFirstWhirlwind, icon.whirlwind)
+		self:DelayedMessage(timer.earliestFirstWhirlwind - 3, L["whirlwindinctext"], "Attention", true, "Alarm")
 	end
 end
 
@@ -238,9 +241,9 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 	if sync == syncName.whirlwind and self.db.profile.whirlwind then
 		self:Message(L["whirlwindonwarn"], "Important")
 		self:Bar(L["whirlwindbartext"], timer.whirlwind, icon.whirlwind)
-
-		self:DelayedBar(timer.whirlwind, L["whirlwindnextbartext"], timer.nextWhirlwind, icon.whirlwind)
-		self:DelayedMessage(timer.nextWhirlwind+timer.whirlwind - 3, L["whirlwindinctext"], "Attention", true, "Alarm")
+		self:RemoveBar(L["whirlwindnextbartext"])
+		self:DelayedIntervalBar(timer.whirlwind, L["whirlwindnextbartext"], timer.earliestNextWhirlwind, timer.latestNextWhirlwind, icon.whirlwind)
+		self:DelayedMessage(timer.earliestNextWhirlwind+timer.whirlwind - 3, L["whirlwindinctext"], "Attention", true, "Alarm")
 	elseif sync == syncName.whirlwindOver and self.db.profile.whirlwind then
 		self:RemoveBar(L["whirlwindbartext"])
 		self:Message(L["whirlwindoffwarn"], "Attention")

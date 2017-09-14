@@ -79,9 +79,9 @@ module.toggleoptions = {"frenzy", "fear", "decimate", "enrage", "bosskill", "zom
 
 -- locals
 local timer = {
-	decimateInterval = 104,
-	zombie = 10,
-	enrage = 324,
+	decimateInterval = 105,
+	zombie = 6,
+	enrage = 330,
 	fear = 20,
 	frenzy = 10,
 	firstFrenzy = 10,
@@ -92,10 +92,11 @@ local icon = {
 	fear = "Spell_Shadow_PsychicScream",
 	decimate = "INV_Shield_01",
 	tranquil = "Spell_Nature_Drowsy",
+	frenzy = "Ability_Druid_ChallangingRoar",
 }
 local syncName = {
-	frenzy = "GluthFrenzyStart",
-	frenzyOver = "GluthFrenzyEnd",
+	frenzy = "GluthFrenzyStart"..module.revision,
+	frenzyOver = "GluthFrenzyEnd"..module.revision,
 }
 
 local lastFrenzy = 0
@@ -152,6 +153,9 @@ function module:OnEngage()
 	if self.db.profile.frenzy then
 		self:Bar(L["frenzy_Nextbar"], timer.firstFrenzy, icon.frenzy, true, "white")
 	end
+	if self.db.profile.fear then
+		self:Bar(L["bar1text"], timer.fear, icon.fear)
+	end
 end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
@@ -197,7 +201,7 @@ end
 
 function module:Decimate()
 	if self.db.profile.decimate then
-		self:Bar(L["decimatebar"], timer.decimateInterval, timer.decimate)
+		self:Bar(L["decimatebar"], timer.decimateInterval, icon.decimate)
 		self:DelayedMessage(timer.decimateInterval - 5, L["decimatesoonwarn"], "Urgent")
 	end
 	if self.db.profile.zombies then

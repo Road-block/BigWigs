@@ -76,11 +76,14 @@ module.toggleoptions = {"mark", "shieldwall", -1, "meteor", "void", "wrath", "bo
 
 -- locals
 local timer = {
-	firstMark = 17,
+	firstMark = 20,
 	mark = 12,
-	meteor = 12,
-	wrath = 12,
-	void = 12,
+	firstMeteor = 30,
+	meteor = {12,15},
+	firstWrath = 12,
+	wrath = {12,15},
+	firstVoid = 12,
+	void = {12,15},
 	shieldwall = 20,
 }
 local icon = {
@@ -91,11 +94,11 @@ local icon = {
 	shieldwall = "Ability_Warrior_ShieldWall",
 }
 local syncName = {
-	shieldwall = "HorsemenShieldWall",
-	mark = "HorsemenMark3",
-	void = "HorsemenVoid2",
-	wrath = "HorsemenWrath2",
-	meteor = "HorsemenMeteor2",
+	shieldwall = "HorsemenShieldWall"..module.revision,
+	mark = "HorsemenMark"..module.revision,
+	void = "HorsemenVoid"..module.revision,
+	wrath = "HorsemenWrath"..module.revision,
+	meteor = "HorsemenMeteor"..module.revision,
 }
 
 local times = nil
@@ -138,6 +141,15 @@ function module:OnEngage()
 		self:Message(L["startwarn"], "Attention")
 		self:Bar(string.format( L["markbar"], self.marks + 1), timer.firstMark, icon.mark) -- 18,5 sec on feenix
 		self:DelayedMessage(timer.firstMark - 5, string.format( L["mark_warn_5"], self.marks + 1), "Urgent")
+	end
+	if self.db.profile.meteor then
+		self:Bar(L["meteorbar"], timer.firstMeteor, icon.meteor)
+	end
+	if self.db.profile.wrath then
+		self:Bar(L["wrathbar"], timer.firstWrath, icon.wrath)
+	end
+	if self.db.profile.void then
+		self:Bar(L["voidbar"], timer.firstVoid, icon.void)
 	end
 end
 
@@ -244,21 +256,21 @@ end
 function module:Meteor()
 	if self.db.profile.meteor then
 		self:Message(L["meteorwarn"], "Important")
-		self:Bar(L["meteorbar"], timer.meteor, icon.meteor)
+		self:IntervalBar(L["meteorbar"], timer.meteor[1], timer.meteor[2], icon.meteor)
 	end
 end
 
 function module:Wrath()
 	if self.db.profile.wrath then
 		self:Message(L["wrathwarn"], "Important")
-		self:Bar(L["wrathbar"], timer.wrath, icon.wrath)
+		self:IntervalBar(L["wrathbar"], timer.wrath[1], timer.wrath[2], icon.wrath)
 	end
 end
 
 function module:Void()
 	if self.db.profile.void then
 		self:Message(L["voidwarn"], "Important")
-		self:Bar(L["voidbar"], timer.void, icon.void)
+		self:IntervalBar(L["voidbar"], timer.void[1], timer.void[2], icon.void)
 	end
 end
 

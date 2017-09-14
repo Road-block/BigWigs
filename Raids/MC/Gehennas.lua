@@ -23,7 +23,8 @@ local timer = {
 	rainTick = 2,
 	rainDuration = 6,
 	nextRain = 19, -- 12, 18
-	curse = 22,
+	earliestCurse = 22,
+	latestCurse = 30,
 }
 local icon = {
 	curse = "Spell_Shadow_BlackPlague",
@@ -199,8 +200,8 @@ end
 
 function module:BigWigs_RecvSync(sync, rest, nick)
 	if sync == syncName.curse and self.db.profile.curse then
-		self:DelayedMessage(timer.curse - 5, L["curse_warn_soon"], "Urgent", nil, nil, true)
-		self:Bar(L["curse_bar"], timer.curse, icon.curse)
+		self:DelayedMessage(timer.earliestCurse - 5, L["curse_warn_soon"], "Urgent", nil, nil, true)
+		self:IntervalBar(L["curse_bar"], timer.earliestCurse, timer.latestCurse, icon.curse)
 	elseif sync == syncName.add and rest and rest ~= "" then
 		rest = tonumber(rest)
 		if rest <= 2 and flamewaker < rest then

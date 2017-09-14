@@ -36,7 +36,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Reset the frame position."] = true,
     ["font"] = "Fonts\\FRIZQT__.TTF",     
             
-    ["Ich habe die Rune von (%w+) gel"] = true, -- douse trigger (always german on Nefarian)
+    ["Ich habe die Rune von (%w+) gel"] = true, -- douse trigger (always german on Nefarian) -- TODO yell trigger for Elysium in enUS
+    ["The runes of warding have been destroyed! Hunt down the infidels, my brethren!"] = true,
 } end)
 
 L:RegisterTranslations("deDE", function() return {
@@ -52,6 +53,7 @@ L:RegisterTranslations("deDE", function() return {
 	["Show the display after a boss has been killed."] = "Das Fenster nach einen Boss Kill anzeigen.",
     ["Reset position"] = "Position zurücksetzen",
 	["Reset the frame position."] = "Die Fensterposition zurücksetzen (bewegt das Fenster zur Ursprungsposition).",
+  ["The runes of warding have been destroyed! Hunt down the infidels, my brethren!"] = "Die Schutzrunen wurden zerstört! Vernichtet alle Ungläubigen meine Brüder!"
 } end)
 
 -----------------------------------------------------------------------
@@ -174,7 +176,18 @@ end
 -----------------------------------------------------------------------
 
 function BigWigsDousedRunes:CHAT_MSG_MONSTER_YELL(msg)
-    local _, _, rune = string.find(msg, L["Ich habe die Rune von (%w+) gel"])
+    local _, _, allrunes = string.find(msg, L["The runes of warding have been destroyed! Hunt down the infidels, my brethren!"])
+    if allrunes then
+      for rune in pairs(self.db.profile.runes) do
+        self:Update(rune)
+      end
+      if self.db.profile.showOnDouse then
+          self:Show()
+      end
+      return
+    end
+
+    local _, _, rune = string.find(msg, L["Ich habe die Rune von (%w+) gel"]) -- TODO yell trigger for Elysium in enUS
     
     if rune then
         self:Update(rune)

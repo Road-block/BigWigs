@@ -81,7 +81,9 @@ module.toggleoptions = {"ms", "bw", "knock", "bosskill"}
 
 -- locals
 local timer = {
-	blastWave = 20,
+	firstBlastWave = 20,
+	earliestBlastWave = 20,
+	latestBlastWave = 35,
 	mortalStrike = 5,
 	firstMortal = 25,
 	knockAway = 20
@@ -125,7 +127,7 @@ end
 function module:OnEngage()
 	self:KTM_SetTarget(self:ToString())
 	if self.db.profile.bw then
-		self:Bar(L["bw_bar"], timer.blastWave, icon.blastWave, true, "Red")
+		self:Bar(L["bw_bar"], timer.firstBlastWave, icon.blastWave, true, "Red")
 	end
 	if self.db.profile.ms then
 		self:Bar("First Mortal Strike", timer.firstMortal, icon.mortalStrike, true, "Black")
@@ -161,7 +163,7 @@ function module:Event(msg)
 		end
 	elseif string.find(msg, L["bw_trigger"]) and self.db.profile.bw then
 		if GetTime() - lastBlastWave > 5 then
-			self:Bar(L["bw_bar"], timer.blastWave, icon.blastWave, true, "Red")
+			self:IntervalBar(L["bw_bar"], timer.earliestBlastWave, timer.latestBlastWave, icon.blastWave, true, "Red")
 			--self:ScheduleEvent("BigWigs_Message", 24, L["bw_warn"], "Urgent", true, "Alert")
 		end
 		lastBlastWave = GetTime()

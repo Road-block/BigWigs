@@ -200,17 +200,20 @@ module.toggleoptions = {"curse", "mc", "shadowflame", "fear", "classcall", "othe
 -- locals
 local timer = {
 	mobspawn = 10,
-	classcall = 25,
+	earliestClasscall = 25,
+	latestClasscall = 35,
 	mc = 15,
 	shadowflame = 18,
 	shadowflameCast = 2,
-	fear = 25,
+	earliestFear = 25,
+	latestFear = 30,
 	fearCast = 1.5,
 	landing = 13,
 	firstClasscall = 25,
-	firstFear = 25,
+	--firstFear = 25,
 	firstCurse = 15,
-	curse = 10
+	earliestCurse = 10,
+	latestCurse = 15,
 }
 local icon = {
 	mobspawn = "Spell_Holy_PrayerOfHealing",
@@ -321,6 +324,10 @@ function module:CHAT_MSG_COMBAT_HOSTILE_DEATH(msg)
 end
 
 function module:CHAT_MSG_MONSTER_YELL(msg)
+	if string.find(msg, L["engage_trigger"]) and not self.engaged then
+		self:DebugMessage("SendEngageSync")
+		self:SendEngageSync()
+	end
 	if string.find(msg, L["landingNOW_trigger"]) then
 		self:Sync(syncName.landing)
 	end
@@ -329,6 +336,10 @@ function module:CHAT_MSG_MONSTER_YELL(msg)
 		if string.find(msg, i) then
 			if v[2] then
 				if self.db.profile.classcall then
+					for k,w in pairs(warnpairs) do
+						self:RemoveBar(w[1])
+					end
+					self:RemoveBar(L["classcall_bar"])
 					local localizedClass, englishClass = UnitClass("player");
 					if string.find(msg, localizedClass) then
 						self:Message(v[1], "Core", nil, "Beware")
@@ -337,11 +348,11 @@ function module:CHAT_MSG_MONSTER_YELL(msg)
 						self:Message(v[1], "Core", nil, "Long")
 					end
 
-					self:Bar(v[1], timer.classcall, icon.classcall)
-					self:DelayedMessage(timer.classcall - 3, L["classcall_warning"], "Important")
-					self:DelayedSound(timer.classcall - 3, "Three")
-					self:DelayedSound(timer.classcall - 2, "Two")
-					self:DelayedSound(timer.classcall - 1, "One")
+					self:IntervalBar(v[1], timer.earliestClasscall, timer.latestClasscall, icon.classcall)
+					self:DelayedMessage(timer.earliestClasscall - 3, L["classcall_warning"], "Important")
+					self:DelayedSound(timer.earliestClasscall - 3, "Three")
+					self:DelayedSound(timer.earliestClasscall - 2, "Two")
+					self:DelayedSound(timer.earliestClasscall - 1, "One")
 				end
 			else
 				if self.db.profile.otherwarn and string.find(msg, L["landing_trigger"]) then
@@ -406,14 +417,12 @@ end
 ------------------------------
 function module:Curse()
 	if self.db.profile.curse then
-		self:RemoveBar(L["curse_bar"]) -- remove timer bar
-		self:Bar(L["curse_bar"], timer.curse, icon.curse)
+		self:IntervalBar(L["curse_bar"], timer.earliestCurse, timer.latestCurse, icon.curse)
 	end
 end
 
 function module:Shadowflame()
 	if self.db.profile.shadowflame then
-		self:RemoveBar(L["shadowflame_bar"]) -- remove timer bar
 		self:Bar(L["shadowflame_bar"], timer.shadowflameCast, icon.shadowflame) -- show cast bar
 		self:Message(L["shadowflame_warning"], "Important", true, "Alarm")
 		self:DelayedBar(timer.shadowflameCast, L["shadowflame_bar"], timer.shadowflame-timer.shadowflameCast, icon.shadowflame) -- delayed timer bar
@@ -425,7 +434,7 @@ function module:Fear()
 		self:RemoveBar(L["fear_bar"]) -- remove timer bar
 		self:Message(L["fear_warning"], "Important", true, "Alert")
 		self:Bar(L["fear_warn"], timer.fearCast, icon.fear) -- show cast bar
-		self:DelayedBar(timer.fearCast, L["fear_bar"], timer.fear, icon.fear) -- delayed timer bar
+		self:DelayedIntervalBar(timer.fearCast, L["fear_bar"], timer.earliestFear, timer.latestFear, icon.fear) -- delayed timer bar
 		--self:WarningSign(icon.fear, 5)
 	end
 end
@@ -440,8 +449,8 @@ function module:Landing()
 		self:Message(L["landing_warning"], "Important", nil, "Beware")
 
 		-- landing in 15s
-		self:DelayedBar(timer.landing, L["classcall_bar"], timer.firstClasscall, icon.classcall)
-		self:DelayedBar(timer.landing, L["fear_bar"], timer.firstFear, icon.fear)
+		self:DelayedIntervalBar(timer.landing, L["classcall_bar"], timer.earliestClasscall, timer.latestClasscall, icon.classcall)
+		self:DelayedIntervalBar(timer.landing, L["fear_bar"], timer.earliestFear, timer.latestFear, icon.fear)
 		self:DelayedBar(timer.landing, L["curse_bar"], timer.firstCurse, icon.curse)
 
 		-- set ktm

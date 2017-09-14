@@ -174,7 +174,7 @@ BigWigs:RegisterChatCommand({"/bw", "/BigWigs"}, function() waterfall:Open("BigW
 waterfall:Register('BigWigs', 'aceOptions',BigWigs.cmdtable, 'title','BigWigs', 'colorR', 0.2, 'colorG', 0.6, 'colorB', 0.2) 
 
 BigWigs.debugFrame = ChatFrame1
-BigWigs.revision = 20019
+BigWigs.revision = 20020
 
 
 function BigWigs:DebugMessage(msg, module)
@@ -401,6 +401,7 @@ function BigWigs:CHAT_MSG_MONSTER_YELL(msg)
             -- enable and engage
             self:EnableModule(mod:ToString())
 			--self:TriggerEvent("BigWigs_SendSync", "BossEngaged "..self:ToString())
+			mod:DebugMessage(mod:ToString() .. " CHAT_MSG_MONSTER_YELL Engage")
             mod:SendEngageSync()
         end
     end
@@ -571,6 +572,14 @@ end
 function BigWigs.modulePrototype:RemoveBar(text)
 	self:TriggerEvent("BigWigs_StopBar", self, text)
 end
+
+function BigWigs.modulePrototype:IntervalBar(text, intervalMin, intervalMax, icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
+	self:TriggerEvent("BigWigs_StartIntervalBar", self, text, intervalMin, intervalMax, "Interface\\Icons\\" .. icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
+end
+function BigWigs.modulePrototype:DelayedIntervalBar(delay, text, intervalMin, intervalMax, icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
+	return self:ScheduleEvent(delayPrefix .. "Bar" .. self:ToString() .. text, "BigWigs_StartIntervalBar", delay, self, text, intervalMin, intervalMax, "Interface\\Icons\\" .. icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
+end
+
 function BigWigs.modulePrototype:DelayedBar(delay, text, time, icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
 	return self:ScheduleEvent(delayPrefix .. "Bar" .. self:ToString() .. text, "BigWigs_StartBar", delay, self, text, time, "Interface\\Icons\\" .. icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
 end

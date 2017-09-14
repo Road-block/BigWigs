@@ -96,9 +96,12 @@ module.toggleoptions = {"wyvern", "frenzy", "berserk", "bosskill"}
 -- locals
 local timer = {
 	berserk = 300,
-	firstSting = 18,
-	sting = 15,
-	frenzyInterval = 25,
+	earliestFirstSting = 18,
+	latestFirstSting = 28,
+	earliestSting = 15,
+	latestSting = 32,
+	earliestFrenzyInterval = 25,
+	latestFrenzyInterval = 35,
 	frenzy = 8,
 }
 local icon = {
@@ -150,11 +153,11 @@ function module:OnEngage()
 		self:DelayedMessage(timer.berserk - 5, L["berserkwarn3"], "Important", nil, nil, true)
 	end
 	if self.db.profile.wyvern then
-		self:Bar(L["bartext"], timer.firstSting, icon.sting)
-		self:DelayedMessage(timer.firstSting - 3, L["stingdelaywarn"], "Urgent", nil, nil, true)
+		self:IntervalBar(L["bartext"], timer.earliestFirstSting, timer.latestFirstSting, icon.sting)
+		self:DelayedMessage(timer.earliestFirstSting - 3, L["stingdelaywarn"], "Urgent", nil, nil, true)
 	end
 	if self.db.profile.frenzy then
-		self:Bar(L["frenzy_Nextbar"], timer.frenzyInterval, icon.frenzy, true, "white")
+		self:IntervalBar(L["frenzy_Nextbar"], timer.earliestFrenzyInterval, timer.latestFrenzyInterval, icon.frenzy, true, "white")
 	end
 end
 
@@ -219,8 +222,8 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 	if sync == syncName.sting then
 		if self.db.profile.wyvern then
 			self:Message(L["stingwarn"], "Urgent")
-			self:Bar(L["bartext"], timer.sting, icon.sting)
-			self:DelayedMessage(timer.sting - 3, L["stingdelaywarn"], "Urgent", nil, nil, true)
+			self:IntervalBar(L["bartext"], timer.earliestSting, timer.latestSting, icon.sting)
+			self:DelayedMessage(timer.earliestSting - 3, L["stingdelaywarn"], "Urgent", nil, nil, true)
 		end
 	elseif sync == syncName.frenzy then
 		self:FrenzyGain()
@@ -235,6 +238,7 @@ end
 
 function module:FrenzyGain()
 	if self.db.profile.frenzy then
+		self:RemoveBar(L["frenzy_Nextbar"])
 		self:Message(L["frenzy_message"], "Important", nil, true, "Alert")
 		self:Bar(L["frenzy_bar"], timer.frenzy, icon.frenzy, true, "red")
 		if playerClass == "HUNTER" then
@@ -249,8 +253,9 @@ function module:FrenzyFade()
 		self:RemoveBar(L["frenzy_bar"])
 		self:RemoveWarningSign(icon.tranquil, true)
 		if lastFrenzy ~= 0 then
-			local NextTime = (lastFrenzy + timer.frenzyInterval) - GetTime()
-			self:Bar(L["frenzy_Nextbar"], NextTime, icon.frenzy, true, "white")
+			local NextTime = (lastFrenzy + timer.earliestFrenzyInterval) - GetTime()
+			local latestNextTime = (lastFrenzy + timer.latestFrenzyInterval) - GetTime()
+			self:IntervalBar(L["frenzy_Nextbar"], NextTime, latestNextTime, icon.frenzy, true, "white")
 		end
 	end
 end

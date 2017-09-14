@@ -87,6 +87,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Move bars that are emphasized to a second anchor."] = true,
     ["Set the scale for emphasized bars."] = true,
     ["Emphasize Bars"] = true,
+    ["Enable IntervalBars"] = true,
+    ["Keep timers visible until the timed event happens"] = true, -- TODO: check for 'untill' mispell
     ["HP Bars"] = true,
 } end)
 
@@ -165,6 +167,7 @@ BigWigsBars.defaultDB = {
 	width = nil,
 	height = nil,
 	reverse = nil,
+	intervalbar = true,
 }
 BigWigsBars.consoleCmd = L["bars"]
 
@@ -220,6 +223,14 @@ BigWigsBars.consoleOptions = {
 			type = "header",
 			name = " ",
 			order = 10,
+		},
+		intervalbar = {
+			type = "toggle",
+			name = L["Enable IntervalBars"],
+			desc = L["Keep timers visible until the timed event happens"],
+			order = 12,
+			get = function() return BigWigsBars.db.profile.intervalbar end,
+			set = function(v) BigWigsBars.db.profile.intervalbar = v end,
 		},
 		growup = {
 			type = "toggle",
@@ -363,6 +374,7 @@ function BigWigsBars:OnEnable()
 	self:RegisterEvent("BigWigs_StartHPBar")
 	self:RegisterEvent("BigWigs_StopHPBar")
 	self:RegisterEvent("BigWigs_SetHPBar")
+	self:RegisterEvent("BigWigs_StartIntervalBar")
 	if not self:IsEventRegistered("Surface_Registered") then 
 	        self:RegisterEvent("Surface_Registered", function()
 			self.consoleOptions.args[L["Texture"]].validate = surface:List()
@@ -738,6 +750,13 @@ function BigWigsBars:BigWigs_SetHPBar(module, text, value)
 	candybar:Update(id)
 	if bar.time <= value then
 		BigWigsBars:BigWigs_StopBar(module, text)
+	end
+end
+
+function BigWigsBars:BigWigs_StartIntervalBar(module, text, intervalMin, intervalMax, icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
+	self:TriggerEvent("BigWigs_StartBar", self, text, intervalMin, icon, otherColor, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)
+	if self.db.profile.intervalbar then
+		self:SetCandyBarFade("BigWigsBar "..text, intervalMax-intervalMin)
 	end
 end
 

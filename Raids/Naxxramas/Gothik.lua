@@ -63,7 +63,6 @@ L:RegisterTranslations("enUS", function() return {
 	inroombartext = "In Room",
 } end )
 
-
 ---------------------------------
 --      	Variables 		   --
 ---------------------------------
@@ -78,9 +77,12 @@ module.toggleoptions = {"room", -1, "add", "adddeath", "bosskill"}
 
 -- locals
 local timer = {
-	inroom = 273,
-	trainee = 20.3, -- its 20.5 seconds not 21
+	inroom = 274,
+	firstTrainee = 24,
+	trainee = 20,
+	firstDeathknight = 74,
 	deathknight = 25,
+	firstRider = 134,
 	rider = 30,
 }
 local icon = {
@@ -90,9 +92,9 @@ local icon = {
 	rider = "Spell_Shadow_DeathPact",
 }
 local syncName = {
-	teleport = "TwinsTeleport",
-	berserk = "TestbossBerserk"
-}
+	--teleport = "TwinsTeleport"..module.revision,
+	--berserk = "TestbossBerserk"..module.revision
+	}
 
 local wave = 0
 local numTrainees = 0
@@ -211,15 +213,19 @@ end
 
 function module:Trainee()
 	numTrainees = numTrainees + 1
+	local traineeTime = timer.trainee
+	if numTrainees == 1 then
+		traineeTime = timer.firstTrainee
+	end
 
 	if self.db.profile.add then
-		self:Bar(string.format(L["trabar"], numTrainees), timer.trainee, icon.trainee)
+		self:Bar(string.format(L["trabar"], numTrainees), traineeTime, icon.trainee)
 	end
-	self:ScheduleEvent("bwgothiktrawarn", self.WaveWarn, timer.trainee - 3, self, L["trawarn"], L, "Attention")
-	self:ScheduleRepeatingEvent("bwgothiktrarepop", self.Trainee, timer.trainee, self)
+	self:ScheduleEvent("bwgothiktrawarn", self.WaveWarn, traineeTime - 3, self, L["trawarn"], L, "Attention")
+	self:ScheduleRepeatingEvent("bwgothiktrarepop", self.Trainee, traineeTime, self)
 
 
-	if numTrainees >= 13 then  -- cancels bar after wave 11
+	if numTrainees >= 12 then  -- cancels bar after wave 11
 		self:RemoveBar(string.format(L["trabar"], numTrainees - 1))
 		self:CancelScheduledEvent("bwgothiktrawarn")
 		self:CancelScheduledEvent("bwgothiktrarepop")
@@ -230,15 +236,19 @@ end
 
 function module:DeathKnight()
 	numDeathknights = numDeathknights + 1
+	local deathknightTime = timer.deathknight
+	if numDeathknights == 1 then
+		deathknightTime = timer.firstDeathknight
+	end
 
 	if self.db.profile.add then
-		self:Bar(string.format(L["dkbar"], numDeathknights), timer.deathknight, icon.deathknight)
+		self:Bar(string.format(L["dkbar"], numDeathknights), deathknightTime, icon.deathknight)
 	end
-	self:ScheduleEvent("bwgothikdkwarn", self.WaveWarn, timer.deathknight - 3, self, L["dkwarn"], L, "Urgent")
-	self:ScheduleRepeatingEvent("bwgothikdkrepop", self.DeathKnight, timer.deathknight, self)
+	self:ScheduleEvent("bwgothikdkwarn", self.WaveWarn, deathknightTime - 3, self, L["dkwarn"], L, "Urgent")
+	self:ScheduleRepeatingEvent("bwgothikdkrepop", self.DeathKnight, deathknightTime, self)
 
 
-	if numDeathknights >= 9 then  -- cancels bar after wave 7
+	if numDeathknights >= 8 then  -- cancels bar after wave 7
 		self:RemoveBar(string.format(L["dkbar"], numDeathknights - 1))
 		self:CancelScheduledEvent("bwgothikdkwarn")
 		self:CancelScheduledEvent("bwgothikdkrepop")
@@ -248,14 +258,18 @@ end
 
 function module:Rider()
 	numRiders = numRiders + 1
+	local riderTime = timer.rider
+	if numRiders == 1 then
+		riderTime = timer.firstRider
+	end
 
 	if self.db.profile.add then
-		self:Bar(string.format(L["riderbar"], numRiders), timer.rider, icon.rider)
+		self:Bar(string.format(L["riderbar"], numRiders), riderTime, icon.rider)
 	end
-	self:ScheduleEvent("bwgothikriderwarn", self.WaveWarn, timer.rider - 3, self, L["riderwarn"], L, "Important")
-	self:ScheduleRepeatingEvent("bwgothikriderrepop", self.Rider, timer.rider, self)
+	self:ScheduleEvent("bwgothikriderwarn", self.WaveWarn, riderTime - 3, self, L["riderwarn"], L, "Important")
+	self:ScheduleRepeatingEvent("bwgothikriderrepop", self.Rider, riderTime, self)
 
-	if numRiders >= 6 then  -- cancels bar after wave 4
+	if numRiders >= 5 then  -- cancels bar after wave 4
 		self:RemoveBar(string.format(L["riderbar"], numRiders - 1))
 		self:CancelScheduledEvent("bwgothikriderwarn")
 		self:CancelScheduledEvent("bwgothikriderrepop")

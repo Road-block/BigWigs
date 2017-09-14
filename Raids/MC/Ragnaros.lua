@@ -28,7 +28,8 @@ local timer = {
 	hammer_of_ragnaros = 11,
 	emerge = 90,
 	submerge = 180,
-	knockback = 25,
+	earliestKnockback = 25,
+	latestKnockback = 30,
 }
 local icon = {
 	emerge_soon = "Inv_Hammer_Unique_Sulfuras",
@@ -155,7 +156,6 @@ L:RegisterTranslations("deDE", function() return {
 } end)
 
 local lastKnockback = nil
-local lastSubmerge = nil
 
 ------------------------------
 --      Initialization      --
@@ -176,6 +176,7 @@ function module:OnSetup()
 	self:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 
 	self.started = nil
+	lastKnockback = nil
 	self.barstarted = false
 	firstKnockback = true
 	sonsdead = 0
@@ -255,8 +256,8 @@ end
 
 function module:Submerge()
 	phase = "submerged"
-	lastSubmerge = GetTime()
 	self:CancelScheduledEvent("bwragnarosaekbwarn")
+	_, _, lastKnockback = self:BarStatus(L["knockback_bar"])
 	self:RemoveBar(L["knockback_bar"])
 	self:CancelDelayedMessage(L["knockback_soon_message"])
 	self:CancelDelayedWarningSign(icon.knockbackWarn)
@@ -289,10 +290,11 @@ function module:Emerge()
 		self:Message(L["emerge_message"], "Attention")
 	end
 
-	if lastSubmerge then
-		local knocktimer = timer.knockback-(lastSubmerge-lastKnockback)
+	if lastKnockback then
+		local knocktimer = timer.earliestKnockback-lastKnockback
+		local latestKnocktimer = timer.latestKnockback-lastKnockback
 		if knocktimer > 0 then
-			self:Bar(L["knockback_bar"], knocktimer, icon.knockback)
+			self:IntervalBar(L["knockback_bar"], knocktimer, latestKnocktimer, icon.knockback)
 		end
 		if knocktimer > 3 then
 			self:DelayedMessage(knocktimer - 3, L["knockback_soon_message"], "Urgent", true, "Alarm", nil, nil, true)
@@ -329,10 +331,9 @@ function module:Knockback()
 		end
 		firstKnockback = false
 		self:RemoveWarningSign(icon.knockbackWarn, true)
-		self:Bar(L["knockback_bar"], timer.knockback, icon.knockback)
-		self:DelayedMessage(timer.knockback - 3, L["knockback_soon_message"], "Urgent", true, "Alarm", nil, nil, true)
-		self:DelayedWarningSign(timer.knockback - 3, icon.knockbackWarn, 8)
-		lastKnockback = GetTime()
+		self:IntervalBar(L["knockback_bar"], timer.earliestKnockback, timer.latestKnockback, icon.knockback)
+		self:DelayedMessage(timer.earliestKnockback - 3, L["knockback_soon_message"], "Urgent", true, "Alarm", nil, nil, true)
+		self:DelayedWarningSign(timer.earliestKnockback - 3, icon.knockbackWarn, 8)
 	end
 end
 

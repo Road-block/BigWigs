@@ -52,7 +52,7 @@ L:RegisterTranslations("enUS", function() return {
 	adddeath = "No... more... Feugen...",
 	adddeath2 = "Master save me...",
 
-	teslaoverload = "%s overloads!",
+	teslaoverload = "overloads!",
 
 	pstrigger = "Now YOU feel pain!",
 	trigger_polarity_cast = "Thaddius begins to cast Polarity Shift",
@@ -67,7 +67,7 @@ L:RegisterTranslations("enUS", function() return {
 	enragewarn = "Enrage!",
 	startwarn = "Thaddius Phase 1",
 	startwarn2 = "Thaddius Phase 2, Enrage in 5 minutes!",
-	addsdownwarn = "Thaddius incoming in 10-20sec!",
+	addsdownwarn = "Thaddius incoming in 14sec!",
 	pswarn1 = "Thaddius begins to cast Polarity Shift! - CHECK DEBUFF!",
 	pswarn2 = "30 seconds to Polarity Shift!",
 	pswarn3 = "3 seconds to Polarity Shift!",
@@ -88,6 +88,8 @@ L:RegisterTranslations("enUS", function() return {
 
 	throwbar = "Throw",
 	throwwarn = "Throw in ~5 seconds!",
+
+	phasebar = "Phase 2",
 } end )
 
 ---------------------------------
@@ -103,11 +105,14 @@ module.toggleoptions = {"enrage", "charge", "polarity", -1, "power", "throw", "p
 
 -- locals
 local timer = {
-	throw = 21,
+	throw = 20.5,
 	powerSurge = 10,
 	enrage = 300,
 	polarityTick = 6,
+	firstPolarity = 10,
 	polarityShift = 30,
+	transition = 14,
+	transition2 = 4,
 }
 local icon = {
 	throw = "Ability_Druid_Maul",
@@ -116,11 +121,11 @@ local icon = {
 	polarityShift = "Spell_Nature_Lightning",
 }
 local syncName = {
-	powerSurge = "StalaggPower",
-	phase2 = "ThaddiusPhaseTwo",
-	adddied = "ThaddiusAddDeath",
-	polarity = "ThaddiusPolarity",
-	enrage = "ThaddiusEnrage",
+	powerSurge = "StalaggPower"..module.revision,
+	--phase2 = "ThaddiusPhaseTwo"..module.revision,
+	addsdead = "ThaddiusAdsDead"..module.revision,
+	polarity = "ThaddiusPolarity"..module.revision,
+	enrage = "ThaddiusEnrage"..module.revision,
 }
 
 
@@ -148,6 +153,7 @@ function module:OnSetup()
 	self.started = nil
 	self.enrageStarted = nil
 	self.addsdead = 0
+	self.transition = nil
 	self.teslawarn = nil
 	self.stage1warn = nil
 	self.previousCharge = ""
@@ -182,15 +188,20 @@ function module:CHAT_MSG_MONSTER_YELL( msg )
 	if string.find(msg, L["pstrigger"]) then
 		self:Sync(syncName.polarity)
 	elseif msg == L["adddeath"] or msg == L["adddeath2"] then
-		self:Sync(syncName.adddied)
-	elseif string.find(msg, L["trigger_phase2_1"]) or string.find(msg, L["trigger_phase2_2"]) or string.find(msg, L["trigger_phase2_3"]) then
-		self:Sync(syncName.phase2)
+		self.addsdead = self.addsdead + 1
+		if self.addsdead == 2 then
+			self:Sync(syncName.addsdead)
+		end
+		--elseif string.find(msg, L["trigger_phase2_1"]) or string.find(msg, L["trigger_phase2_2"]) or string.find(msg, L["trigger_phase2_3"]) then
+		--	self:Sync(syncName.phase2)
 	end
 end
 
 function module:CheckForEnrage(msg)
 	if msg == L["enragetrigger"] then
 		self:Sync(syncName.enrage)
+	elseif string.find(msg, L["teslaoverload"]) then
+		self:Transition(timer.transition2)
 	end
 end
 
@@ -251,10 +262,10 @@ end
 function module:BigWigs_RecvSync(sync, rest, nick)
 	if sync == syncName.powerSurge then
 		self:PowerSurge()
-	elseif sync == syncName.adddied then
-		self:AddDied()
-	elseif sync == syncName.phase2 then
-		self:Phase2()
+	elseif sync == syncName.addsdead then
+		self:Transition(timer.transition)
+		--elseif sync == syncName.phase2 then
+		--	self:Phase2()
 	elseif sync == syncName.polarity then
 		self:PolarityShift()
 	elseif sync == syncName.enrage then
@@ -273,22 +284,21 @@ function module:PowerSurge()
 	end
 end
 
-function module:AddDied()
-	self.addsdead = self.addsdead + 1
-	if self.addsdead == 2 then
+function module:Transition(transitionTime)
+	self:RemoveBar(L["throwbar"])
+	self:CancelDelayedMessage(L["throwwarn"])
+	self:CancelScheduledEvent("bwthaddiusthrow")
+	if not self.transition then
 		if self.db.profile.phase then
 			self:Message(L["addsdownwarn"], "Attention")
+			self:Bar(L["phasebar"], transitionTime, icon.polarityShift)
 		end
-		self:CancelScheduledEvent("bwthaddiusthrow")
-		self:CancelDelayedMessage(L["throwwarn"])
+		self:ScheduleEvent("bwThaddiusP2", self.Phase2, transitionTime, self)
+		self.transition = true
 	end
 end
 
 function module:Phase2()
-	self:RemoveBar(L["throwbar"])
-	self:CancelDelayedMessage(L["throwwarn"])
-	self:CancelScheduledEvent("bwthaddiusthrow")
-
 	if self.db.profile.phase then
 		self:Message(L["startwarn2"], "Important")
 	end
@@ -300,6 +310,7 @@ function module:Phase2()
 		self:DelayedMessage(timer.enrage - 30, L["warn_enrage_30"], "Important")
 		self:DelayedMessage(timer.enrage - 10, L["warn_enrage_10"], "Important")
 	end
+	self:Bar(L["bar1text"], timer.firstPolarity, icon.polarityShift)
 end
 
 function module:PolarityShift()
@@ -334,7 +345,6 @@ function module:Throw()
 		self:DelayedMessage(timer.throw - 5, L["throwwarn"], "Urgent")
 	end
 end
-
 
 ------------------------------
 --      Test                --

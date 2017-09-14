@@ -24,7 +24,8 @@ local timer = {
 	firstCurse = 10,
 	blink = 25,
 	firstBlink = 25,
-	deaden = 7,
+	earliestDeaden = 7,
+	latestDeaden = 14,
 	firstDeaden = 5,
 }
 local icon = {
@@ -257,16 +258,15 @@ function module:DeadenMagic()
 	if self.db.profile.deaden then
 		self:RemoveBar(L["deaden_bar"])
 		self:Message(L["deaden_warn"], "Important")
-		self:Bar(L["deaden_bar"], timer.deaden, icon.deaden)
+		self:IntervalBar(L["deaden_bar"], timer.earliestDeaden, timer.latestDeaden, icon.deaden)
 		if playerClass == "SHAMAN" or playerClass == "PRIEST" then
-			self:WarningSign(icon.deaden, timer.deaden)
+			self:WarningSign(icon.deaden, timer.earliestDeaden)
 		end
 	end
 end
 
 function module:DeadenMagicOver()
 	if self.db.profile.deaden then
-		self:RemoveBar(L["deaden_bar"])
 		if playerClass == "SHAMAN" or playerClass == "PRIEST" then
 			self:RemoveWarningSign(icon.deaden)
 		end

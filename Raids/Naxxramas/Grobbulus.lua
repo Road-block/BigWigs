@@ -83,8 +83,8 @@ local icon = {
 	cloud = "Ability_Creature_Disease_02",
 }
 local syncName = {
-	inject = "GrobbulusInject",
-	cloud = "GrobbulusCloud",
+	inject = "GrobbulusInject"..module.revision,
+	cloud = "GrobbulusCloud"..module.revision,
 }
 
 local berserkannounced = nil
@@ -180,7 +180,7 @@ function module:Inject(player)
 			self:Bar(string.format(L["bomb_bar"], player), timer.inject, icon.inject)
 		end
 		if self.db.profile.icon then
-			self:Icon(player, -1, timer.inject)
+			self:Icon(player)
 		end
 	end
 end

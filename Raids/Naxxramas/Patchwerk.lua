@@ -51,7 +51,7 @@ local icon = {
 	enrage = "Spell_Shadow_UnholyFrenzy",
 }
 local syncName = {
-	enrage = "PatchwerkEnrage",
+	enrage = "PatchwerkEnrage"..module.revision,
 }
 
 local berserkannounced = nil

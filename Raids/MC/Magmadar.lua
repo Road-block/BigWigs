@@ -15,7 +15,8 @@ module.toggleoptions = {"panic", "frenzy", "bosskill"}
 ---------------------------------
 
 local timer = {
-	panic = 30,
+	earliestPanic = 30,
+	latestPanic = 35,
 	firstPanicDelay = 10 - 30,
 	frenzy = 8,
 	firstFrenzy = 15
@@ -173,14 +174,14 @@ function module:Panic(delay)
 			self:Message(L["feartime"], "Important")
 		end
 
-		self:DelayedMessage(timer.panic - 5 + delay, L["fearsoon"], "Urgent", nil, nil, true)
-		self:Bar(L["fearbar"], timer.panic + delay, icon.panic)
+		self:DelayedMessage(timer.earliestPanic - 5 + delay, L["fearsoon"], "Urgent", nil, nil, true)
+		self:IntervalBar(L["fearbar"], timer.earliestPanic + delay, timer.latestPanic + delay, icon.panic)
 
 		if playerClass == "WARRIOR" then
-			self:DelayedSound(timer.panic - 10 + delay, "Ten")
-			self:DelayedSound(timer.panic - 3 + delay, "Three")
-			self:DelayedSound(timer.panic - 2 + delay, "Two")
-			self:DelayedSound(timer.panic - 1 + delay, "One")
+			self:DelayedSound(timer.earliestPanic - 10 + delay, "Ten")
+			self:DelayedSound(timer.earliestPanic - 3 + delay, "Three")
+			self:DelayedSound(timer.earliestPanic - 2 + delay, "Two")
+			self:DelayedSound(timer.earliestPanic - 1 + delay, "One")
 		end
 	end
 end

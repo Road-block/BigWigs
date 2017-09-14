@@ -224,7 +224,7 @@ function module:OnEnable()
 	self:RegisterEvent("UNIT_HEALTH")
 
 	self:ThrottleSync(10, "ChromaggusEngage")
-	self:ThrottleSync(1, syncName.breath)
+	self:ThrottleSync(25, syncName.breath)
 	self:ThrottleSync(5, syncName.frenzy)
 	self:ThrottleSync(5, syncName.frenzyOver)
 end

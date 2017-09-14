@@ -40,8 +40,6 @@ L:RegisterTranslations("enUS", function() return {
 	barGlare	= "Next Dark Glare!",
 	barGlareEnds = "Dark Glare ends",
 	barGlareCasting = "Casting Dark Glare",
-	glarewarning	= "DARK GLARE ON YOU!",
-	groupwarning	= "Dark Glare on group %s (%s)",
 
 	group_cmd = "group",
 	group_name = "Dark Glare Group Warning",
@@ -54,8 +52,6 @@ L:RegisterTranslations("enUS", function() return {
 	giant_cmd = "giant",
 	giant_name = "Giant Eye Alert",
 	giant_desc = "Warn for Giant Eyes",
-	giant_claw_spawn_trigger = "Giant Claw Tentacle 's Ground Rupture",
-	giant_eye_spawn_trigger = "Giant Eye Tentacle 's Ground Rupture",
 	barGiant	= "Giant Eye!",
 	barGiantC	= "Giant Claw!",
 	GiantEye = "Giant Eye Tentacle in 5 sec!",
@@ -65,8 +61,6 @@ L:RegisterTranslations("enUS", function() return {
 	weakened_name = "Weakened Alert",
 	weakened_desc = "Warn for Weakened State",
 	weakenedtrigger = "is weakened!",
-	vulnerability_direct_test = "^[%w]+[%s's]* ([%w%s:]+) ([%w]+) C'Thun for ([%d]+) ([%w]+) damage%.[%s%(]*([%d]*)",
-	vulnerability_dots_test = "^C'Thun suffers ([%d]+) ([%w]+) damage from [%w]+[%s's]* ([%w%s:]+)%.[%s%(]*([%d]*)",
 	weakened	= "C'Thun is weakened for 45 sec",
 	invulnerable2	= "Party ends in 5 seconds",
 	invulnerable1	= "Party over - C'Thun invulnerable",
@@ -131,8 +125,6 @@ L:RegisterTranslations("deDE", function() return {
 	barGlare	= "Nächstes Dunkles Starren!", -- "Next Dark Glare!",
 	barGlareEnds = "Dunkles Starren endet", -- Dark Glare ends",
 	barGlareCasting = "Zaubert Dunkles Starren", -- "Casting Dark Glare",
-	glarewarning	= "DUNKLES STARREN AUF DIR!", --"DARK GLARE ON YOU!",
-	groupwarning	= "Dunkles Starren auf Gruppe %s (%s)", -- "Dark Glare on group %s (%s)",
 
 	--group_cmd = "group",
 	group_name = "Dunkles Starren Gruppenwarnung", -- "Dark Glare Group Warning",
@@ -143,8 +135,6 @@ L:RegisterTranslations("deDE", function() return {
 	--giant_cmd = "giant",
 	giant_name = "Riesiges Augententakel Alarm", --Giant Eye Alert",
 	giant_desc = "Warnung vor Riesigem Augententakel", -- "Warn for Giant Eyes",
-	giant_claw_spawn_trigger = "Riesiges Klauententakel(.+) Erdriss", -- "Giant Claw Tentacle 's Ground Rupture",
-	giant_eye_spawn_trigger =  "Riesiges Augententakel(.+) Erdriss", -- "Giant Eye Tentacle 's Ground Rupture",
 	barGiant	= "Riesiges Augententakel!",
 	barGiantC	= "Riesiges Klauententakel!",
 	GiantEye = "Riesiges Augententakel Tentacle in 5 sec!",
@@ -154,8 +144,6 @@ L:RegisterTranslations("deDE", function() return {
 	weakened_name = "Schwäche Alarm", --"Weakened Alert",
 	weakened_desc = "Warnung für Schwäche Phase", -- "Warn for Weakened State",
 	weakenedtrigger = "ist geschwächt", -- "is weakened!",
-	vulnerability_direct_test = "^[%w]+[%ss]* ([%w%s:]+) ([%w]+) C'Thun für ([%d]+) ([%w]+) damage%.[%s%(]*([%d]*)",
-	vulnerability_dots_test = "^C'Thun suffers ([%d]+) ([%w]+) damage from [%w]+[%s's]* ([%w%s:]+)%.[%s%(]*([%d]*)",
 	weakened	= "C'Thun ist für 45 sec geschwächt", --"C'Thun is weakened for 45 sec",
 	invulnerable2	= "Party endet in 5 sec", --"Party ends in 5 seconds",
 	invulnerable1	= "Party vorbei - C'Thun unverwundbar", -- "Party over - C'Thun invulnerable",
@@ -185,7 +173,7 @@ L:RegisterTranslations("deDE", function() return {
 ---------------------------------
 
 -- module variables
-module.revision = 20010 -- To be overridden by the module!
+module.revision = 20011 -- To be overridden by the module!
 local eyeofcthun = AceLibrary("Babble-Boss-2.2")["Eye of C'Thun"]
 local cthun = AceLibrary("Babble-Boss-2.2")["C'Thun"]
 module.enabletrigger = {eyeofcthun, cthun} -- string or table {boss, add1, add2}
@@ -223,8 +211,6 @@ local timer = {
 	CheckTentacleHP = 0.5, -- delay for updating flesh tentacle hp
 	weakened = 45,        -- duration of a weaken
 
-	lastEyeTentaclesSpawn = 0,
-	lastGiantEyeSpawn = 0,
 	eyeBeam = 2,         -- Eye Beam Cast time
 }
 local icon = {
@@ -240,11 +226,11 @@ local syncName = {
 	p2Start = "CThunP2Start"..module.revision,
 	weaken = "CThunWeakened"..module.revision,
 	weakenOver = "CThunWeakenedOver"..module.revision,
+	tentacleSpawn = "TentacleSpawn"..module.revision,
 	giantEyeDown = "CThunGEdown"..module.revision,
 	giantClawSpawn = "GiantClawSpawn"..module.revision,
 	giantEyeSpawn = "GiantEyeSpawn"..module.revision,
-	giantEyeEyeBeam = "GiantEyeEyeBeam"..module.revision,
-	cthunEyeBeam = "CThunEyeBeam"..module.revision,
+	eyeBeam = "CThunEyeBeam"..module.revision,
 	fleshtentacledead = "CThunFleshTentacleDead"..module.revision,
 }
 
@@ -272,28 +258,21 @@ local eyeTarget = nil
 -- called after module is enabled
 function module:OnEnable()
 
-	self:RegisterEvent("CHAT_MSG_MONSTER_EMOTE", "Emote")		-- weakened triggering, does not work on nefarian
-	self:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE", "Emote")		-- weakened triggering, does not work on nefarian
-	self:RegisterEvent("CHAT_MSG_COMBAT_SELF_HITS", "PlayerDamageEvents")				-- alternative weaken trigger for nefarian
-	self:RegisterEvent("CHAT_MSG_SPELL_SELF_DAMAGE", "PlayerDamageEvents") 				-- alternative weaken trigger for nefarian
-	self:RegisterEvent("CHAT_MSG_SPELL_PET_DAMAGE", "PlayerDamageEvents") 				-- alternative weaken trigger for nefarian
-	self:RegisterEvent("CHAT_MSG_SPELL_PARTY_DAMAGE", "PlayerDamageEvents") 			-- alternative weaken trigger for nefarian
-	self:RegisterEvent("CHAT_MSG_SPELL_FRIENDLYPLAYER_DAMAGE", "PlayerDamageEvents")	-- alternative weaken trigger for nefarian
-
+	self:RegisterEvent("CHAT_MSG_MONSTER_EMOTE", "Emote")
+	self:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE", "Emote")
 
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE", "CheckEyeBeam")
-	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_PARTY_DAMAGE", "CheckTentacleSpawn")
-	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE", "CheckTentacleSpawn")
 
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE", "CheckDigestiveAcid")
 
-	--self:ThrottleSync(20, syncName.start)
 	self:ThrottleSync(20, syncName.p2Start)
 	self:ThrottleSync(50, syncName.weaken)
 	self:ThrottleSync(3, syncName.giantEyeDown)
 	self:ThrottleSync(600, syncName.weakenOver)
-	self:ThrottleSync(30, syncName.giantClawSpawn)
 	self:ThrottleSync(30, syncName.fleshtentacledead)
+	self:ThrottleSync(25, syncName.giantClawSpawn)
+	self:ThrottleSync(25, syncName.giantEyeSpawn)
+	self:ThrottleSync(25, syncName.tentacleSpawn)
 end
 
 -- called after module is enabled and after each wipe
@@ -352,49 +331,22 @@ function module:CheckForWipe(event)
 	end
 end
 
--- does not work on nefarian
 function module:Emote( msg )
 	if string.find(msg, L["weakenedtrigger"]) then
 		self:Sync(syncName.weaken)
-	end
-end
--- alternative weaken trigger for nefarian
-function module:PlayerDamageEvents(msg)
-	if not string.find(msg, "Eye of C'Thun") then
-		local _, _, userspell, stype, dmg, school, partial = string.find(msg, L["vulnerability_direct_test"])
-		if stype and dmg and school then
-			if not isWeakened and tonumber(dmg) > 100 then
-				-- trigger weakened
-				self:Sync(syncName.weaken)
-			elseif isWeakened and tonumber(dmg) == 1 then
-				-- trigger weakened over
-				self:DebugMessage("C'Thun weakened over trigger")
-				self:Sync(syncName.weakenOver)
-			end
-		end
 	end
 end
 
 function module:CheckEyeBeam(msg)
 	if string.find(msg, L["eye_beam_trigger"]) then
 		self:DebugMessage("Eye Beam trigger")
-		self:Sync(syncName.giantEyeEyeBeam)
+		self:Sync(syncName.eyeBeam)
 	elseif string.find(msg, L["eye_beam_trigger_cthun"]) then
 		self:DebugMessage("C'Thun Eye Beam trigger")
-		self:Sync(syncName.cthunEyeBeam)
+		self:Sync(syncName.eyeBeam)
 		if not cthunstarted then
 			self:SendEngageSync()
 		end
-	end
-end
-
-function module:CheckTentacleSpawn(msg)
-	self:DebugMessage("GiantClawSpawn: " .. msg)
-	if string.find(msg, L["giant_claw_spawn_trigger"]) then
-		self:Sync(syncName.giantClawSpawn)
-	elseif string.find(msg, L["giant_eye_spawn_trigger"]) then
-		timer.lastGiantEyeSpawn = GetTime()
-		self:Sync(syncName.giantEyeSpawn)
 	end
 end
 
@@ -422,14 +374,14 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 		self:CThunWeakenedOver()
 	elseif sync == syncName.giantEyeDown then
 		self:Message(L["gedownwarn"], "Positive")
-	elseif sync == syncName.giantEyeEyeBeam then
-		self:GiantEyeEyeBeam()
-	elseif sync == syncName.cthunEyeBeam then
+	elseif sync == syncName.eyeBeam then
 		self:EyeBeam()
 	elseif sync == syncName.giantClawSpawn then
 		self:GCTentacleRape()
 	elseif sync == syncName.giantEyeSpawn then
 		self:GTentacleRape()
+	elseif sync == syncName.tentacleSpawn then
+		self:TentacleRape()
 	elseif sync == syncName.fleshtentacledead then
 		fleshtentacledead = true
 		self.tentacleHP = 100
@@ -463,8 +415,7 @@ function module:CThunStart()
 
 		firstWarning = true
 
-		self:ScheduleEvent("bwcthuntentaclesstart", self.TentacleRape, timer.p1TentacleStart, self)
-		self:ScheduleEvent("bwcthungroupwarningstart", self.GroupWarning, timer.p1GlareStart - 1, self)
+		self:DelayedSync(timer.p1TentacleStart, syncName.tentacleSpawn)
 		self:ScheduleRepeatingEvent("bwcthuntarget", self.CheckTarget, timer.target, self)
 
 		self:Proximity()
@@ -488,7 +439,6 @@ function module:CThunP2Start()
 		self:RemoveBar(L["barGlareCasting"] )
 		self:RemoveBar(L["barGlareEnds"] )
 		self:CancelScheduledEvent("bwcthundarkglare") -- ok
-		self:CancelScheduledEvent("bwcthundarkglarestart") -- ok
 		self:CancelDelayedBar(L["barGlareEnds"])
 		self:CancelDelayedBar(L["barGlare"])
 		self:RemoveWarningSign(icon.darkGlare)
@@ -498,13 +448,10 @@ function module:CThunP2Start()
 		self:RemoveBar(L["barTentacle"] )
 		self:RemoveBar(L["barNoRape"] )
 		self:CancelDelayedMessage(self.db.profile.rape and L["tentacle"] or L["norape"])
-		self:CancelScheduledEvent("bwcthuntentacles") -- ok
-		self:CancelScheduledEvent("bwcthuntentaclesstart") -- ok
+		self:CancelDelayedSync(syncName.tentacleSpawn)
 
 		-- cancel dark glare group warning
-		self:CancelScheduledEvent("bwcthungroupwarning") -- ok
 		self:CancelScheduledEvent("bwcthuntarget") -- ok
-		self:CancelScheduledEvent("bwcthungroupwarningstart") -- ok
 
 		self:RemoveBar(L["barStartRandomBeams"] )
 
@@ -522,12 +469,11 @@ function module:CThunP2Start()
 			self:Bar(L["barGiantC"], timer.p2FirstGiantClaw, icon.giantClaw)
 		end
 
-		self:ScheduleEvent("bwcthunstarttentacles", self.TentacleRape, timer.p2FirstEyeTentacles, self )
-		self:ScheduleEvent("bwcthunstartgiant", self.GTentacleRape, timer.p2FirstGiantEye, self )
-		self:ScheduleEvent("bwcthunstartgiantc", self.GCTentacleRape, timer.p2FirstGiantClaw, self )
+		self:DelayedSync(timer.p2FirstEyeTentacles, syncName.tentacleSpawn)
+		self:DelayedSync(timer.p2FirstGiantEye, syncName.giantEyeSpawn)
+		self:DelayedSync(timer.p2FirstGiantClaw, syncName.giantClawSpawn)
 		self:ScheduleRepeatingEvent("bwcthuntargetp2", self.CheckTarget, timer.target, self )
 
-		timer.lastEyeTentaclesSpawn = GetTime() + 10
 	end
 	if self.db.profile.stomach then
 		self:TriggerEvent("BigWigs_StartDebuffTrack", self:ToString(), "Interface\\Icons\\Ability_Creature_Disease_02", L["playersInStomach"])
@@ -551,10 +497,10 @@ function module:CThunWeakened()
 
 	-- cancel tentacle timers
 	self:CancelDelayedMessage(self.db.profile.rape and L["tentacle"] or L["norape"])
-	self:CancelScheduledEvent("bwcthungtentacles") -- ok
-	self:CancelScheduledEvent("bwcthungctentacles") -- ok
 	self:CancelDelayedMessage(L["GiantEye"])
-	self:CancelScheduledEvent("bwcthunstartgiant") -- ok
+	self:CancelDelayedSync(syncName.giantEyeSpawn)
+	self:CancelDelayedSync(syncName.giantClawSpawn)
+	self:CancelDelayedSync(syncName.tentacleSpawn)
 
 
 	self:RemoveBar(L["barTentacle"])
@@ -562,21 +508,7 @@ function module:CThunWeakened()
 	self:RemoveBar(L["barGiant"])
 	self:RemoveBar(L["barGiantC"])
 
-	-- next eye tentacles 75s after last spawn / 45s delayed
-	self:RemoveBar(L["barTentacle"] )
-	self:RemoveBar(L["barNoRape"] )
-	self:CancelDelayedMessage(self.db.profile.rape and L["tentacle"] or L["norape"])
-	self:CancelScheduledEvent("bwcthuntentacles") -- ok
-	self:CancelScheduledEvent("bwcthuntentaclesstart") -- ok
-
-	--local nextEyeTentacles = timer.p2Tentacle - (GetTime() - timer.lastEyeTentaclesSpawn) + timer.weakened;
-	--self:DebugMessage("nextEyeTentacles(".. nextEyeTentacles ..") = timer.p2Tentacle(".. timer.p2Tentacle ..") - (GetTime() - timer.lastEyeTentaclesSpawn)(".. (GetTime() - timer.lastEyeTentaclesSpawn) ..") + time.weakened(".. timer.weakened ..")")
-	--self:Bar(self.db.profile.rape and L["barTentacle"] or L["barNoRape"], nextEyeTentacles, icon.eyeTentacles)
-	--self:ScheduleEvent("bwcthunstarttentacles", self.TentacleRape, nextEyeTentacles, self )
-	--self:DelayedMessage(nextEyeTentacles - 5, self.db.profile.rape and L["tentacle"] or L["norape"], "Urgent", false, nil, true)
-
-	self:ScheduleEvent("bwcthunweakenedover", self.CThunWeakenedOver, timer.weakened, self )
-	timer.lastGiantEyeSpawn = 0 -- reset timer to force a refresh on the timer
+	self:DelayedSync(timer.weakened, syncName.weakenOver)
 end
 
 function module:CThunWeakenedOver()
@@ -584,7 +516,7 @@ function module:CThunWeakenedOver()
 	self:ThrottleSync(600, syncName.weakenOver)
 	self:TriggerEvent("BigWigs_StartHPBar", self, L["First Tentacle"], 100)
 	self:TriggerEvent("BigWigs_SetHPBar", self, L["First Tentacle"], 0)
-	self:CancelScheduledEvent("bwcthunweakenedover") -- ok
+	self:CancelDelayedSync(syncName.weakenOver) -- ok
 
 	if self.db.profile.weakened then
 		self:RemoveBar(L["barWeakened"])
@@ -593,34 +525,19 @@ function module:CThunWeakenedOver()
 		self:Message(L["invulnerable1"], "Important")
 	end
 
-	-- cancel tentacle timers
-	self:CancelScheduledEvent("bwcthunstartgiantc") -- ok
-	self:CancelScheduledEvent("bwcthunstartgiant") -- ok
-	self:CancelDelayedMessage(L["GiantEye"])
-
 	-- next giant claw 10s after weaken
 	self:Bar(L["barGiantC"], timer.p2FirstGiantClawAfterWeaken, icon.giantClaw)
-	self:ScheduleEvent("bwcthunstartgiantc", self.GCTentacleRape, timer.p2FirstGiantClawAfterWeaken, self )
+	self:DelayedSync(timer.p2FirstGiantClawAfterWeaken, syncName.giantClawSpawn)
 
 	-- next giant eye 40s after weaken
 	self:Bar(L["barGiant"], timer.p2FirstGiantEyeAfterWeaken, icon.giantEye)
-	self:ScheduleEvent("bwcthunstartgiant", self.GTentacleRape, timer.p2FirstGiantEyeAfterWeaken, self )
+	self:DelayedSync(timer.p2FirstGiantEyeAfterWeaken, syncName.giantEyeSpawn)
 	self:DelayedMessage(timer.p2FirstGiantEyeAfterWeaken - 5, L["GiantEye"], "Urgent", false, nil, true)
 
 	--next rape party
 	self:Bar(self.db.profile.rape and L["barTentacle"] or L["barNoRape"], timer.p2FirstEyeAfterWeaken, icon.eyeTentacles)
-	self:ScheduleEvent("bwcthunstarttentacles", self.TentacleRape, timer.p2FirstEyeAfterWeaken, self )
+	self:DelayedSync(timer.p2FirstEyeAfterWeaken, syncName.tentacleSpawn)
 	self:DelayedMessage(timer.p2FirstEyeAfterWeaken - 5, self.db.profile.rape and L["tentacle"] or L["norape"], "Urgent", false, nil, true)
-end
-
-function module:GiantEyeEyeBeam()
-	local timeSinceLastSpawn = GetTime() - timer.lastGiantEyeSpawn
-	if timeSinceLastSpawn > 30 then
-		timer.lastGiantEyeSpawn = GetTime()
-		self:GTentacleRape()
-	end
-
-	self:EyeBeam()
 end
 
 function module:DelayedEyeBeamCheck()
@@ -712,7 +629,7 @@ end
 function module:DarkGlare()
 	if self.db.profile.glare then
 		if firstGlare then
-			self:ScheduleEvent("bwcthundarkglarestart", self.DarkGlare, timer.p1GlareStart, self )
+			self:ScheduleEvent("bwcthundarkglare", self.DarkGlare, timer.p1GlareStart, self )
 
 			self:Bar(L["barGlare"], timer.p1GlareStart, icon.darkGlare)
 			firstGlare = nil
@@ -730,93 +647,27 @@ function module:DarkGlare()
 	end
 end
 
-function module:GroupWarning()
-	self:CheckTarget()
-	if eyeTarget then
-		BigWigs:DebugMessage("GroupWarning; target: " .. eyeTarget)
-		local i, name, group, glareTarget, glareGroup, playerGroup
-		local playerName = GetUnitName("player")
-		for i = 1, GetNumRaidMembers(), 1 do
-			name, _, group, _, _, _, _, _ = GetRaidRosterInfo(i)
-			if name == eyeTarget then
-				glareTarget = name
-				glareGroup = group
-			end
-			if name == playerName then
-				playerGroup = group
-			end
-		end
-		if self.db.profile.group then
-			self:Message(string.format( L["groupwarning"], glareGroup, eyeTarget), "Important")
-
-			-- dark glare near you?
-			if (playerGroup == glareGroup or playerGroup == glareGroup - 1 or playerGroup == glareGroup + 1 or playerGroup == glareGroup - 7 or playerGroup == glareGroup + 7) then
-				self:Sound("RunAway")
-			else
-				self:Sound("Beware")
-			end
-
-			-- announce glare group
-			local number = "Eight"
-			if glareGroup == 1 then
-				number = "One"
-			elseif glareGroup == 2 then
-				number = "Two"
-			elseif glareGroup == 3 then
-				number = "Three"
-			elseif glareGroup == 4 then
-				number = "Four"
-			elseif glareGroup == 5 then
-				number = "Five"
-			elseif glareGroup == 6 then
-				number = "Six"
-			elseif glareGroup == 7 then
-				number = "Seven"
-			end
-			self:DelayedSound(1, number)
-
-		end
-	else
-		self:Sound("Beware")
-	end
-	if firstWarning then
-		self:CancelScheduledEvent("bwcthungroupwarning") -- ok
-		self:ScheduleRepeatingEvent("bwcthungroupwarning", self.GroupWarning, timer.p1Glare, self )
-		firstWarning = nil
-	end
-end
-
 -- P2
 function module:GTentacleRape()
-	self:ScheduleEvent("bwcthungtentacles", self.GTentacleRape, timer.p2ETentacle, self )
-	if phase2started then
-		if self.db.profile.giant then
-			self:Bar(L["barGiant"], timer.p2ETentacle, icon.giantEye)
-			self:DelayedMessage(timer.p2ETentacle - 5, L["GiantEye"], "Urgent", false, nil, true)
-
-			if timer.lastGiantEyeSpawn > 0 then
-				self:WarningSign(icon.giantEye, 5)
-			end
-		end
+	self:DelayedSync(timer.p2ETentacle, syncName.giantEyeSpawn)
+	if self.db.profile.giant then
+		self:Bar(L["barGiant"], timer.p2ETentacle, icon.giantEye)
+		self:DelayedMessage(timer.p2ETentacle - 5, L["GiantEye"], "Urgent", false, nil, true)
 	end
 end
 
 function module:GCTentacleRape()
 	doCheckForWipe = true
-	self:CancelScheduledEvent("bwcthungctentacles") -- ok
-	self:ScheduleEvent("bwcthungctentacles", self.GCTentacleRape, timer.p2GiantClaw, self )
-	if phase2started then
-		self:KTM_Reset()
-		self:KTM_SetTarget("Giant Claw Tentacle")
-		if self.db.profile.giant then
-			self:Bar(L["barGiantC"], timer.p2GiantClaw, icon.giantClaw)
-		end
+	self:DelayedSync(timer.p2GiantClaw, syncName.giantClawSpawn)
+	self:KTM_Reset()
+	self:KTM_SetTarget("Giant Claw Tentacle")
+	if self.db.profile.giant then
+		self:Bar(L["barGiantC"], timer.p2GiantClaw, icon.giantClaw)
 	end
 end
 
 function module:TentacleRape()
-	timer.lastEyeTentaclesSpawn = GetTime()
-	self:ScheduleEvent("bwcthuntentacles", self.TentacleRape, tentacletime, self )
+	self:DelayedSync(tentacletime, syncName.tentacleSpawn)
 	if self.db.profile.tentacle then
 		self:Bar(self.db.profile.rape and L["barTentacle"] or L["barNoRape"], tentacletime, icon.eyeTentacles)
 		self:DelayedMessage(tentacletime - 5, self.db.profile.rape and L["tentacle"] or L["norape"], "Urgent", false, nil, true)

@@ -102,7 +102,8 @@ module.toggleoptions = {"freeze", "volley", "toxinyou", "toxinother", "bosskill"
 
 -- locals
 local timer = {
-	volley = 10,
+	earliestVolley = 10,
+	latestVolley = 15,
 }
 local icon = {
 	volley = "Spell_Nature_CorrosiveBreath",
@@ -134,6 +135,9 @@ end
 
 -- called after boss is engaged
 function module:OnEngage()
+	if self.db.profile.volley then
+		self:IntervalBar(L["volley_bar"], timer.earliestVolley, timer.latestVolley, icon.volley)
+	end
 end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
@@ -148,8 +152,8 @@ end
 function module:CheckVis(arg1)
 	if not prior and self.db.profile.volley and string.find(arg1, L["volley_trigger"]) then
 		self:Message(L["volley_warn"], "Urgent")
-		self:DelayedMessage(timer.volley - 3, L["volley_soon_warn"], "Urgent", nil, nil, true)
-		self:Bar(L["volley_bar"], timer.volley, icon.volley)
+		self:DelayedMessage(timer.earliestVolley - 3, L["volley_soon_warn"], "Urgent", nil, nil, true)
+		self:IntervalBar(L["volley_bar"], timer.earliestVolley, timer.latestVolley, icon.volley)
 		prior = true
 	elseif string.find(arg1, L["toxin_trigger"]) then
 		local _,_, pl, ty = string.find(arg1, L["toxin_trigger"])

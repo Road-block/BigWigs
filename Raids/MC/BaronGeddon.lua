@@ -18,9 +18,12 @@ module.toggleoptions = {"inferno", "service", "bomb", "mana", "announce", "icon"
 local timer = {
 	bomb = 8,
 	inferno = 8,
-	nextInferno = 18,
-	firstIgnite = 10,
-	ignite = 20,
+	earliestNextInferno = 18,
+	latestNextInferno = 24,
+	earliestFirstIgnite = 10,
+	latestFirstIgnite = 15,
+	earliestIgnite = 20,
+	latestIgnite = 30,
 	service = 8,
 }
 local icon = {
@@ -294,16 +297,17 @@ function module:Inferno()
 	--self:DelayedSync(timer.nextInferno, syncName.inferno)
 
 	if self.db.profile.inferno then
+		self:RemoveBar(L["inferno_bar"])
 		if firstinferno then
-			self:Bar(L["inferno_bar"], timer.nextInferno, icon.inferno)
+			self:IntervalBar(L["inferno_bar"], timer.earliestNextInferno, timer.latestNextInferno, icon.inferno)
 			firstinferno = false
 		else
 			self:Message(L["inferno_message"], "Important")
 			self:Bar(L["inferno_channel"], timer.inferno, icon.inferno)
-			self:DelayedBar(timer.inferno, L["inferno_bar"], timer.nextInferno - timer.inferno, icon.inferno)
+			self:DelayedIntervalBar(timer.inferno, L["inferno_bar"], timer.earliestNextInferno - timer.inferno, timer.latestNextInferno - timer.inferno, icon.inferno)
 		end
 
-		self:DelayedMessage(timer.nextInferno - 5, L["nextinferno_message"], "Urgent", nil, nil, true)
+		self:DelayedMessage(timer.earliestNextInferno - 5, L["nextinferno_message"], "Urgent", nil, nil, true)
 	end
 
 	firstinferno = false
@@ -313,9 +317,9 @@ function module:ManaIgnite()
 	if self.db.profile.mana then
 		if not firstignite then
 			self:Message(L["ignite_message"], "Important")
-			self:Bar(L["ignite_bar"], timer.ignite, icon.ignite)
+			self:IntervalBar(L["ignite_bar"], timer.earliestIgnite, timer.latestIgnite, icon.ignite)
 		else
-			self:Bar(L["ignite_bar"], timer.firstIgnite, icon.ignite)
+			self:IntervalBar(L["ignite_bar"], timer.earliestFirstIgnite, timer.latestFirstIgnite, icon.ignite)
 		end
 		firstignite = false
 	end

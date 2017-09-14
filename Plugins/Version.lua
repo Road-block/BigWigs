@@ -47,6 +47,12 @@ L:RegisterTranslations("enUS", function() return {
 	["Close"] = true,
 	["Cancel"] = true,
 
+	["People with outdated BigWigs:"] = true,
+	["Notify old versions"] = true,
+	["Notify old versions"] = true,
+	["List people with old versions to raid chat."] = true,
+	["Download newest version from https://github.com/Hosq/BigWigs"] = true,
+
 } end )
 
 L:RegisterTranslations("deDE", function() return {
@@ -187,6 +193,11 @@ function BigWigsVersionQuery:UpdateTablet()
 					"tooltipText", L["Runs a version query on your current zone."],
 					"func", function() self:QueryVersion() end)
 				dewdrop:AddLine(
+					"text", L["Notify old versions"],
+					"tooltipTitle", L["Notify old versions"],
+					"tooltipText", L["List people with old versions to raid chat."],
+					"func", function() self:NotifyOldVersions() end)
+				dewdrop:AddLine(
 					"text", L["Close window"],
 					"tooltipTitle", L["Close window"],
 					"tooltipText", L["Closes the version query window."],
@@ -200,6 +211,7 @@ function BigWigsVersionQuery:UpdateTablet()
 		tablet:Refresh("BigWigs_VersionQuery")
 	end
 end
+
 function BigWigsVersionQuery:UpdateVersions()
 	for name, version in pairs(self.responseTable) do
 		if not self.zoneRevisions then return end
@@ -252,6 +264,22 @@ function BigWigsVersionQuery:IsOutOfDate()
 		local dialog = StaticPopup_Show ("BigWigsOutOfDateDialog")
 
 	end
+end
+
+function BigWigsVersionQuery:NotifyOldVersions()
+	local line = ""
+	for name, version in pairs(self.responseTable) do
+		if self.zoneRevisions[self.currentZone] and version < self.zoneRevisions[self.currentZone] then
+			if line == "" then
+				line = name
+			else
+				line = line.." "..name
+			end
+		end
+	end
+	SendChatMessage(L["People with outdated BigWigs:"],"RAID")
+	SendChatMessage(line,"RAID")
+	SendChatMessage(L["Download newest version from https://github.com/Hosq/BigWigs"], "RAID")
 end
 
 function BigWigsVersionQuery:OnTooltipUpdate()

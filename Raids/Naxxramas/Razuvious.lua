@@ -26,7 +26,7 @@ L:RegisterTranslations("enUS", function() return {
 	shieldwall_name = "Shield Wall Timer",
 	shieldwall_desc = "Show timer for Shield Wall",
 
-	startwarn = "Instructor Razuvious engaged! 20sec to Shout, 30sec to Unbalancing Strike!",
+	startwarn = "Instructor Razuvious engaged! 15sec to Shout, 30sec to Unbalancing Strike!",
 
 	starttrigger1 = "Stand and fight!",
 	starttrigger2 = "Show me what you've got!",
@@ -63,7 +63,7 @@ module.toggleoptions = {"shout", "unbalance", "shieldwall", "bosskill"}
 
 -- locals
 local timer = {
-	firstShout = 20,
+	firstShout = 15,
 	shout = 25,
 	noShoutDelay = 5,
 	unbalance = 30,
@@ -75,8 +75,8 @@ local icon = {
 	shieldwall = "Ability_Warrior_ShieldWall",
 }
 local syncName = {
-	shout = "RazuviousShout",
-	shieldwall = "RazuviousShieldwall",
+	shout = "RazuviousShout"..module.revision,
+	shieldwall = "RazuviousShieldwall"..module.revision,
 }
 
 
