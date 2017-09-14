@@ -168,4 +168,4 @@ Raids\Naxxramas\Gothik.lua
 Raids\Naxxramas\Loatheb.lua
 Raids\Naxxramas\Horsemen.lua
 Raids\Naxxramas\Sapphiron.lua
-Raids\Naxxramas\Kelthuzad.lua
+Raids\Naxxramas\Kelthuzad.lua

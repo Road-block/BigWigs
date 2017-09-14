@@ -27,6 +27,10 @@ L:RegisterTranslations("enUS", function() return {
 	spore_name = "Spore Alert",
 	spore_desc = "Warn for Spores",
 
+	debuff_cmd = "debuff",
+	debuff_name = "Spore Debuff",
+	debuff_desc = "Show icon when your spore debuff is running out",
+
 	doombar = "Inevitable Doom %d",
 	doomwarn = "Inevitable Doom %d! %d sec to next!",
 	doomwarn5sec = "Inevitable Doom %d in 5 sec!",
@@ -52,9 +56,13 @@ L:RegisterTranslations("enUS", function() return {
 
 	you = "You",
 	are = "are",
+	fungalBloom = "Fungal Bloom",
 } end )
 
-
+local LoathebDebuff = CreateFrame( "GameTooltip", "LoathebDebuff", nil, "GameTooltipTemplate" );
+LoathebDebuff:Hide()
+LoathebDebuff:SetFrameStrata("TOOLTIP")
+LoathebDebuff:SetOwner(WorldFrame, "ANCHOR_NONE")
 ---------------------------------
 --      	Variables 		   --
 ---------------------------------
@@ -63,7 +71,7 @@ L:RegisterTranslations("enUS", function() return {
 module.revision = 20003 -- To be overridden by the module!
 module.enabletrigger = module.translatedName -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
-module.toggleoptions = {"doom", --[["curse",]] "spore", "bosskill"}
+module.toggleoptions = {"doom", --[["curse",]] "spore", "debuff", "bosskill"}
 
 
 -- locals
@@ -74,13 +82,15 @@ local timer = {
 	doomShort = 15,
 	doom = 0, -- this variable will be changed during the encounter
 	spore = 13,
---firstCurse = 10,
---curse = 30,
+	--firstCurse = 10,
+	--curse = 30,
+	getNextSpore = 25,
 }
 local icon = {
 	softEnrage = "Spell_Shadow_UnholyFrenzy",
 	doom = "Spell_Shadow_NightOfTheDead",
 	spore = "Ability_TheBlackArrow",
+	sieni = "Interface\\AddOns\\\BigWigs\\Textures\\sieni",
 --curse = "Spell_Holy_RemoveCurse",
 }
 local syncName = {
@@ -141,6 +151,7 @@ function module:OnEngage()
 
 	self:Spore()
 	self:ScheduleRepeatingEvent("bwloathebspore", self.Spore, timer.spore, self)
+	self:ScheduleRepeatingEvent("bwLoathebCheckDebuff", self.CheckDebuff, 0.5, self)
 end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
@@ -224,5 +235,31 @@ function module:Spore()
 	if self.db.profile.spore then
 		--self:Message(string.format(L["sporewarn"], numSpore), "Important")
 		self:Bar(string.format(L["sporebar"], numSpore), timer.spore, icon.spore)
+	end
+end
+
+function module:CheckDebuff()
+	if self.db.profile.debuff then
+		local debuff = strlower(L["fungalBloom"])
+		local tooltip=LoathebDebuff;
+		local textleft1=getglobal(tooltip:GetName().."TextLeft1");
+
+		for i=0, 15 do
+			local id = GetPlayerBuff(i,"HARMFUL")
+			tooltip:SetOwner(UIParent, "ANCHOR_NONE");
+			tooltip:SetPlayerBuff(id);
+			buffName = textleft1:GetText();
+			tooltip:Hide();
+			if ( buffName and strfind(strlower(buffName), debuff )) then
+				local timeleft = GetPlayerBuffTimeLeft(id)
+				if timeleft < timer.getNextSpore then
+					self:TriggerEvent("BigWigs_ShowWarningSign", icon.sieni, timer.getNextSpore)
+				elseif timeleft > timer.getNextSpore then
+					self:TriggerEvent("BigWigs_HideWarningSign", icon.sieni)
+				end
+			elseif ( buffName==nil ) then
+				break;
+			end
+		end
 	end
 end

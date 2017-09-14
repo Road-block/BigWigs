@@ -65,8 +65,8 @@ module.enabletrigger = module.translatedName -- string or table {boss, add1, add
 module.toggleoptions = {"berserk", "lifedrain", "deepbreath", "icebolt", "bosskill"}
 
 -- Proximity Plugin
--- module.proximityCheck = function(unit) return CheckInteractDistance(unit, 2) end
--- module.proximitySilent = false
+module.proximityCheck = function(unit) return CheckInteractDistance(unit, 2) end
+module.proximitySilent = false
 
 
 -- locals
@@ -221,10 +221,15 @@ function module:Flight()
 		end
 		self:Message(L["deepbreath_incoming_message"], "Urgent")
 		self:Bar(L["deepbreath_incoming_bar"], timer.deepbreathInc, icon.deepbreathInc)
+		self:DelayedMessage(timer.deepbreathInc, L["deepbreath_warning"], "Important")
+		self:DelayedBar(timer.deepbreathInc, L["deepbreath_bar"], timer.deepbreath, icon.deepbreath)
 		lastTarget = nil
 		cachedUnitId = nil
 		self:ScheduleEvent("besapphdelayed", self.StartTargetScanner, timer.groundPhase, self)
 	end
+	self:Proximity()
+	self:ScheduleEvent("bwsapphktm", self.RemoveProximity, timer.deepbreathInc, self)
+	self:ScheduleEvent("bwsapphktm", self.KTM_Reset, timer.deepbreathInc + timer.deepbreath, self)
 end
 
 

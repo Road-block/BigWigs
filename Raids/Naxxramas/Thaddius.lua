@@ -299,6 +299,7 @@ function module:Transition(transitionTime)
 end
 
 function module:Phase2()
+	self:KTM_Reset()
 	if self.db.profile.phase then
 		self:Message(L["startwarn2"], "Important")
 	end

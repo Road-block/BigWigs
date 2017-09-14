@@ -53,6 +53,13 @@ L:RegisterTranslations("enUS", function() return {
 	cloud_warn = "Poison Cloud next in ~15 seconds!",
 	cloud_bar = "Poison Cloud",
 
+	slimespray_cmd = "slimespray",
+	slimespray_name = "Slime Spray",
+	slimespray_desc = "Show timer for Slime Spray",
+
+	slimeSpray_bar = "Possible Slime Spray",
+	slimeSpray_trigger = "Slime Spray",
+
 } end )
 
 
@@ -64,7 +71,7 @@ L:RegisterTranslations("enUS", function() return {
 module.revision = 20003 -- To be overridden by the module!
 module.enabletrigger = module.translatedName -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
-module.toggleoptions = {"youinjected", "otherinjected", "icon", "cloud", -1, "enrage", "bosskill"}
+module.toggleoptions = {"youinjected", "otherinjected", "slimespray",  "icon", "cloud", -1, "enrage", "bosskill"}
 
 -- Proximity Plugin
 -- module.proximityCheck = function(unit) return CheckInteractDistance(unit, 2) end
@@ -76,15 +83,19 @@ local timer = {
 	enrage = 720,
 	inject = 10,
 	cloud = 15,
+	firstSlimeSpray = {20, 30},
+	slimeSpray = {30, 35},
 }
 local icon = {
 	enrage = "INV_Shield_01",
 	inject = "Spell_Shadow_CallofBone",
 	cloud = "Ability_Creature_Disease_02",
+	slimeSpray = "INV_Misc_Slime_01",
 }
 local syncName = {
 	inject = "GrobbulusInject"..module.revision,
 	cloud = "GrobbulusCloud"..module.revision,
+	slimeSpray = "GrobbulusSlimeSpray"..module.revision,
 }
 
 local berserkannounced = nil
@@ -100,10 +111,16 @@ function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_FRIENDLYPLAYER_DAMAGE", "InjectEvent")
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_PARTY_DAMAGE", "InjectEvent")
 
+	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_HITS", "CheckSpray")
+	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES", "CheckSpray")
+	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_PARTY_HITS", "CheckSpray")
+	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_PARTY_MISSES", "CheckSpray")
+
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
 
 	self:ThrottleSync(3, syncName.inject)
 	self:ThrottleSync(5, syncName.cloud)
+	self:ThrottleSync(10, syncName.slimeSpray)
 end
 
 -- called after module is enabled and after each wipe
@@ -121,6 +138,9 @@ function module:OnEngage()
 		self:DelayedMessage(timer.enrage - 1 * 50, L["enrage1min"], "Important")
 		self:DelayedMessage(timer.enrage - 30, L["enrage30sec"], "Important")
 		self:DelayedMessage(timer.enrage - 10, L["enrage10sec"], "Important")
+	end
+	if self.db.profile.slimespray then
+		self:IntervalBar(L["slimeSpray_bar"], timer.firstSlimeSpray[1], timer.firstSlimeSpray[2], icon.slimeSpray)
 	end
 end
 
@@ -149,6 +169,12 @@ function module:InjectEvent( msg )
 	end
 end
 
+function module:CheckSpray( msg )
+	if string.find( msg, L["slimeSpray_trigger"]) then
+		self:Sync(syncName.slimeSpray)
+	end
+end
+
 
 ------------------------------
 --      Synchronization	    --
@@ -159,6 +185,10 @@ function module:BigWigs_RecvSync( sync, rest, nick )
 		self:Inject(rest)
 	elseif sync == syncName.cloud then
 		self:Cloud()
+	elseif sync == syncName.slimeSpray then
+		if self.db.profile.slimespray then
+			self:IntervalBar(L["slimeSpray_bar"], timer.slimeSpray[1], timer.slimeSpray[2], icon.slimeSpray)
+		end
 	end
 end
 

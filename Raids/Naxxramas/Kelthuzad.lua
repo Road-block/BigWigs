@@ -458,6 +458,7 @@ function module:Phase2()
 	end
 
 	-- master target should be automatically set, as soon as a raid assistant targets kel'thuzad
+	self:KTM_SetTarget(self:ToString())
 	self:KTM_Reset()
 
 	-- proximity silent

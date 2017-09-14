@@ -216,7 +216,7 @@ end
 
 function module:Disease()
 	if self.db.profile.disease then
-		self:Message(L["dwarn"], "Important")
+	self:Message(L["dwarn"], "Important")
 
 		-- don't show bar before teleport
 		local registered, time, elapsed = self:BarStatus(L["toPlatform_bar"])
@@ -246,6 +246,7 @@ end
 
 function module:ToFloor()
 	self:CancelScheduledEvent("bwHeiganToFloor")
+	self:KTM_Reset()
 	if self.db.profile.teleport then
 		self:Message(L["on_floor_message"], "Attention")
 		self:Bar(L["toPlatform_bar"], timer.toPlatform, icon.toPlatform)
