@@ -241,7 +241,7 @@ function module:ToPlatform()
 		self:Bar(L["erruptionbar"], timer.firstDanceErruption, icon.erruption)
 		self:ScheduleEvent("HeiganErruption", self.Erruption, timer.firstDanceErruption, self)
 	end
-	self:ScheduleEvent("bwHeiganToFloor",  self.ToFloor, self.toFloor, self )
+	self:ScheduleEvent("bwHeiganToFloor",  self.ToFloor, timer.toFloor, self )
 end
 
 function module:ToFloor()

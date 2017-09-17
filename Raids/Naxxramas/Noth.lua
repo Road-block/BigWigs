@@ -101,7 +101,10 @@ local timer = {
 	curse = {50,60},
 
 	wave1 = {5,7},
-	wave2 = {30,37},
+	wave2_1 = {30,37},
+	wave2_2 = {49,56},
+	wave2_3 = {62,69},
+	wave2 = 0,
 }
 local icon = {
 	balcony = "Spell_Magic_LesserInvisibilty",
@@ -144,6 +147,7 @@ end
 function module:OnSetup()
 	timer.room = timer.firstRoom
 	timer.balcony = timer.firstBalcony
+	timer.wave2 = timer.wave2_1
 end
 
 -- called after boss is engaged
@@ -228,8 +232,10 @@ function module:TeleportToRoom()
 	self:CancelScheduledEvent("bwnothtoroom")
 	if timer.balcony == timer.firstBalcony then
 		timer.balcony = timer.secondBalcony
+		timer.wave2 = timer.wave2_2
 	elseif timer.balcony == timer.secondBalcony then
 		timer.balcony = timer.thirdBalcony
+		timer.wave2 = timer.wave2_3
 	end
 
 	if self.db.profile.teleport then

@@ -84,7 +84,7 @@ local timer = {
 	spore = 13,
 	--firstCurse = 10,
 	--curse = 30,
-	getNextSpore = 25,
+	getNextSpore = 20,
 }
 local icon = {
 	softEnrage = "Spell_Shadow_UnholyFrenzy",

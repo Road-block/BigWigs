@@ -97,7 +97,7 @@ L:RegisterTranslations("enUS", function() return {
 	phase2_bar = "Kel'Thuzad Active!",
 
 	phase3_soon_warning = "Phase 3 soon!",
-	phase3_trigger = "Master, I require aid!",
+	phase3_trigger = "Master! I require aid!",
 	phase3_warning = "Phase 3, Guardians in ~15sec!",
 
 	guardians_trigger = "Very well. Warriors of the frozen wastes, rise up! I command you to fight, kill and die for your master! Let none survive!",

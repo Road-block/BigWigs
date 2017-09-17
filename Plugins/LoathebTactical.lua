@@ -57,7 +57,7 @@ L:RegisterTranslations("enUS", function() return {
 local consumableslist = {L["shadowpot"],L["noconsumable"],L["bandage"],L["wrtorhs"],L["shadowpotandbandage"],L["noconsumable"],L["bandage"],L["noconsumable"],L["wrtorhs"]}
 
 local syncName = {
-}
+	}
 
 ----------------------------------
 --      Module Declaration      --
@@ -114,8 +114,11 @@ function BigWigsLoathebTactical:OnEnable()
 	self:RegisterEvent("BigWigs_RecvSync")
 
 	DEFAULT_CHAT_FRAME:AddMessage(L["resetmsg"])
-	
-	local m = BigWigs:GetModule("Loatheb") 
+
+	self.frameIcon:Hide()
+	self.frameIcon2:Hide()
+
+	local m = BigWigs:GetModule("Loatheb")
 	syncName.doom = "LoathebDoom"..m.revision
 end
 
@@ -157,7 +160,6 @@ function BigWigsLoathebTactical:ConsumableWarning()
 				self.frameTexture:SetTexture(nil)
 				self.frameTexture2:SetTexture(nil)
 			end
-
 			self.frameIcon.texture = self.frameTexture
 			self.frameTexture:SetTexCoord(0.0,1.0,0.0,1.0)
 			self.frameIcon:SetPoint("CENTER",200,100)

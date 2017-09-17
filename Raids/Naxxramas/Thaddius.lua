@@ -90,6 +90,10 @@ L:RegisterTranslations("enUS", function() return {
 	throwwarn = "Throw in ~5 seconds!",
 
 	phasebar = "Phase 2",
+
+	add1 = "Feugen",
+	add2 = "Stalagg",
+
 } end )
 
 ---------------------------------
@@ -157,16 +161,25 @@ function module:OnSetup()
 	self.teslawarn = nil
 	self.stage1warn = nil
 	self.previousCharge = ""
+	self.add1HP = 100
+	self.add2HP = 100
 end
 
 -- called after boss is engaged
 function module:OnEngage()
+	self.add1HP = 100
+	self.add2HP = 100
+	self:TriggerEvent("BigWigs_StartHPBar", self, L["add1"], 100)
+	self:TriggerEvent("BigWigs_SetHPBar", self, L["add1"], 0)
+	self:TriggerEvent("BigWigs_StartHPBar", self, L["add2"], 100)
+	self:TriggerEvent("BigWigs_SetHPBar", self, L["add2"], 0)
 	if self.db.profile.phase and not self.stage1warn then
 		self:Message(L["startwarn"], "Important")
 	end
 	self.stage1warn = true
 	self:Throw()
 	self:ScheduleRepeatingEvent("bwthaddiusthrow", self.Throw, timer.throw, self)
+	self:ScheduleRepeatingEvent("bwThaddiusAddCheck", self.CheckAddHP, 0.5, self )
 end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
@@ -288,6 +301,9 @@ function module:Transition(transitionTime)
 	self:RemoveBar(L["throwbar"])
 	self:CancelDelayedMessage(L["throwwarn"])
 	self:CancelScheduledEvent("bwthaddiusthrow")
+	self:TriggerEvent("BigWigs_StopHPBar", self, L["add1"])
+	self:TriggerEvent("BigWigs_StopHPBar", self, L["add2"])
+	self:CancelScheduledEvent("bwThaddiusAddCheck")
 	if not self.transition then
 		if self.db.profile.phase then
 			self:Message(L["addsdownwarn"], "Attention")
@@ -344,6 +360,35 @@ function module:Throw()
 	if self.db.profile.throw then
 		self:Bar(L["throwbar"], timer.throw, icon.throw)
 		self:DelayedMessage(timer.throw - 5, L["throwwarn"], "Urgent")
+	end
+end
+
+function module:CheckAddHP()
+	local health1
+	local health2
+	if UnitName("playertarget") == L["add1"] then
+		health1 = UnitHealth("playertarget")
+	elseif UnitName("playertarget") == L["add2"] then
+		health2 = UnitHealth("playertarget")
+	end
+
+	for i = 1, GetNumRaidMembers(), 1 do
+		if UnitName("Raid"..i.."target") == L["add1"] then
+			health1 = UnitHealth("Raid"..i.."target")
+		elseif UnitName("Raid"..i.."target") == L["add2"] then
+			health2 = UnitHealth("Raid"..i.."target")
+		end
+		if health1 and health2 then break; end
+	end
+
+	if health1 then
+		self.add1HP = health1
+		self:TriggerEvent("BigWigs_SetHPBar", self, L["add1"], 100-self.add1HP)
+	end
+
+	if health2 then
+		self.add2HP = health1
+		self:TriggerEvent("BigWigs_SetHPBar", self, L["add2"], 100-self.add2HP)
 	end
 end
 

@@ -228,8 +228,8 @@ function module:Flight()
 		self:ScheduleEvent("besapphdelayed", self.StartTargetScanner, timer.groundPhase, self)
 	end
 	self:Proximity()
-	self:ScheduleEvent("bwsapphktm", self.RemoveProximity, timer.deepbreathInc, self)
-	self:ScheduleEvent("bwsapphktm", self.KTM_Reset, timer.deepbreathInc + timer.deepbreath, self)
+	self:ScheduleEvent("bwsapphremoveproximity", self.RemoveProximity, timer.deepbreathInc, self)
+	--self:ScheduleEvent("bwsapphktm", self.KTM_Reset, timer.deepbreathInc + timer.deepbreath, self)
 end
 
 
