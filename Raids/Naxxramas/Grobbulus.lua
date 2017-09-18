@@ -111,10 +111,8 @@ function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_FRIENDLYPLAYER_DAMAGE", "InjectEvent")
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_PARTY_DAMAGE", "InjectEvent")
 
-	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_HITS", "CheckSpray")
-	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES", "CheckSpray")
-	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_PARTY_HITS", "CheckSpray")
-	self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_PARTY_MISSES", "CheckSpray")
+	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE", "CheckSpray")
+	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_PARTY_DAMAGE", "CheckSpray")
 
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
 
@@ -187,6 +185,7 @@ function module:BigWigs_RecvSync( sync, rest, nick )
 		self:Cloud()
 	elseif sync == syncName.slimeSpray then
 		if self.db.profile.slimespray then
+			self:RemoveBar(L["slimeSpray_bar"])
 			self:IntervalBar(L["slimeSpray_bar"], timer.slimeSpray[1], timer.slimeSpray[2], icon.slimeSpray)
 		end
 	end

@@ -387,7 +387,7 @@ function module:CheckAddHP()
 	end
 
 	if health2 then
-		self.add2HP = health1
+		self.add2HP = health2
 		self:TriggerEvent("BigWigs_SetHPBar", self, L["add2"], 100-self.add2HP)
 	end
 end

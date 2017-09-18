@@ -59,10 +59,6 @@ L:RegisterTranslations("enUS", function() return {
 	addcount_name = "P1 Add counter",
 	addcount_desc = "Counts number of killed adds in P1",
 
-	ktmreset_cmd = "ktmreset",
-	ktmreset_name = "Do not reset KTM on MC",
-	ktmreset_desc = "Resets KTM on MC when disabled, does nothing when enabled.",
-
 	mc_trigger1 = "Your soul, is bound to me now!",
 	mc_trigger2 = "There will be no escape!",
 	mc_warning = "Mind Control!",
@@ -120,6 +116,7 @@ L:RegisterTranslations("enUS", function() return {
 
 	frostblast_bar = "Possible Frost Blast",
 	frostblast_trigger1 = "I will freeze the blood in your veins!",
+	frostblast_trigger2 = "afflicted by Frost Blast",
 	frostblast_warning = "Frost Blast!",
 	frostblast_soon_message = "Possible Frost Blast in ~5sec!",
 
@@ -146,10 +143,10 @@ L:RegisterTranslations("enUS", function() return {
 ---------------------------------
 
 -- module variables
-module.revision = 20003 -- To be overridden by the module!
+module.revision = 20004 -- To be overridden by the module!
 module.enabletrigger = module.translatedName -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
-module.toggleoptions = {"frostbolt", "frostboltbar", -1, "frostblast", "proximity", "fissure", "mc", "ktmreset", -1, "fbvolley", -1, "detonate", "detonateicon", -1 ,"guardians", -1, "addcount", "phase", "bosskill"}
+module.toggleoptions = {"frostbolt", "frostboltbar", -1, "frostblast", "proximity", "fissure", "mc", -1, "fbvolley", -1, "detonate", "detonateicon", -1 ,"guardians", -1, "addcount", "phase", "bosskill"}
 
 -- Proximity Plugin
 module.proximityCheck = function(unit) return CheckInteractDistance(unit, 2) end
@@ -167,7 +164,7 @@ local timer = {
 	detonate = 5,
 	nextDetonate = {20,25},
 	firstFrostblast = 50,
-	frostblast = {55,65},
+	frostblast = {30,60},
 	firstMindcontrol = 60,
 	mindcontrol = {60,90},
 	firstGuardians = 5,
@@ -343,6 +340,10 @@ end
 self:Bar(L["frostbolt_volley"], 15, icon.frostboltVolley)
 end]]
 function module:Affliction(msg)
+	if string.find(msg, L["frostblast_trigger2"]) then
+		self:Sync(syncName.frostblast)
+	end
+
 	if string.find(msg, L["detonate_trigger"]) then
 		local _,_, dplayer, dtype = string.find( msg, L["detonate_trigger"])
 		if dplayer and dtype then
@@ -445,16 +446,22 @@ end
 
 function module:Phase2()
 	self:Bar(L["phase2_bar"], timer.phase2, icon.phase2)
-	self:DelayedBar(timer.phase2, L["mc_bar"], timer.firstMindcontrol, icon.mindcontrol)
-	self:DelayedBar(timer.phase2, L["detonate_possible_bar"], timer.firstDetonate, icon.detonate)
-	self:DelayedBar(timer.phase2, L["frostblast_bar"], timer.firstFrostblast, icon.frostblast)
 	self:DelayedMessage(timer.phase2, L["phase2_warning"], "Important")
-	self:DelayedMessage(timer.firstDetonate + timer.phase2 - 5, L["phase2_detonate_warning"], "Important")
-	self:DelayedMessage(timer.firstFrostblast  + timer.phase2 - 5, L["phase2_frostblast_warning"], "Important")
-	self:DelayedMessage(timer.firstMindcontrol  + timer.phase2 - 5, L["phase2_mc_warning"], "Important")
+	if self.db.profile.mc then
+		self:DelayedBar(timer.phase2, L["mc_bar"], timer.firstMindcontrol, icon.mindcontrol)
+		self:DelayedMessage(timer.firstMindcontrol  + timer.phase2 - 5, L["phase2_mc_warning"], "Important")
+	end
+	if self.db.profile.detonate then
+		self:DelayedBar(timer.phase2, L["detonate_possible_bar"], timer.firstDetonate, icon.detonate)
+		self:DelayedMessage(timer.firstDetonate + timer.phase2 - 5, L["phase2_detonate_warning"], "Important")
+	end
+	if self.db.profile.frostblast then
+		self:DelayedBar(timer.phase2, L["frostblast_bar"], timer.firstFrostblast, icon.frostblast)
+		self:DelayedMessage(timer.firstFrostblast  + timer.phase2 - 5, L["phase2_frostblast_warning"], "Important")
+	end
 
 	if self.db.profile.fbvolley then
-		self:Bar(L["frostbolt_volley"], timer.firstFrostboltVolley, icon.frostboltVolley)
+		self:DelayedBar(timer.phase2, L["frostbolt_volley"], timer.firstFrostboltVolley, icon.frostboltVolley)
 	end
 
 	-- master target should be automatically set, as soon as a raid assistant targets kel'thuzad
@@ -462,7 +469,9 @@ function module:Phase2()
 	self:KTM_Reset()
 
 	-- proximity silent
-	self:Proximity()
+	if self.db.profile.proximity then
+		self:Proximity()
+	end
 end
 
 function module:Phase3()
@@ -472,9 +481,10 @@ function module:Phase3()
 end
 
 function module:MindControl()
-	self:Message(L["mc_warning"], "Urgent")
-	self:IntervalBar(L["mc_bar"], timer.mindcontrol[1], timer.mindcontrol[2], icon.mindcontrol)
-
+	if self.db.profile.mc then
+		self:Message(L["mc_warning"], "Urgent")
+		self:IntervalBar(L["mc_bar"], timer.mindcontrol[1], timer.mindcontrol[2], icon.mindcontrol)
+	end
 	self:KTM_Reset()
 end
 
@@ -490,9 +500,11 @@ function module:Guardians()
 end
 
 function module:FrostBlast()
-	self:Message(L["frostblast_warning"], "Attention")
-	self:DelayedMessage(timer.frostblast[1] - 5, L["frostblast_soon_message"])
-	self:IntervalBar(L["frostblast_bar"], timer.frostblast[1], timer.frostblast[2], icon.frostblast)
+	if self.db.profile.frostblast then
+		self:Message(L["frostblast_warning"], "Attention")
+		self:DelayedMessage(timer.frostblast[1] - 5, L["frostblast_soon_message"])
+		self:IntervalBar(L["frostblast_bar"], timer.frostblast[1], timer.frostblast[2], icon.frostblast)
+	end
 end
 
 function module:Detonate(name)
