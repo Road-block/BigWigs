@@ -94,11 +94,9 @@ L:RegisterTranslations("enUS", function() return {
 
 	phase3_soon_warning = "Phase 3 soon!",
 	phase3_trigger = "Master! I require aid!",
-	phase3_warning = "Phase 3, Guardians in ~15sec!",
+	phase3_warning = "Phase 3, Guardians incoming!",
 
-	guardians_trigger = "Very well. Warriors of the frozen wastes, rise up! I command you to fight, kill and die for your master! Let none survive!",
-	guardians_warning = "Guardians incoming in ~10sec!",
-	guardians_bar = "Guardians incoming!",
+	guardians_bar = "Guardian %d",
 
 	fissure_trigger = "cast Shadow Fissure.",
 	fissure_warning = "Shadow Fissure!",
@@ -193,7 +191,6 @@ local syncName = {
 	soulWeaver = "KelAddDiesSoul"..module.revision,
 	phase2 = "KelPhase2"..module.revision,
 	phase3 = "KelPhase3"..module.revision,
-	guardians = "KelGuardians"..module.revision,
 }
 
 local timeLastFrostboltVolley = 0    -- saves time of first frostbolt
@@ -306,12 +303,10 @@ end
 function module:CHAT_MSG_MONSTER_YELL(msg)
 	if ((msg == L["phase2_trigger1"]) or (msg == L["phase2_trigger2"]) or (msg == L["phase2_trigger3"])) then
 		self:Sync(syncName.phase2)
-	elseif msg == L["phase3_trigger"] then
+	elseif string.find(msg, L["phase3_trigger"]) then
 		self:Sync(syncName.phase3)
 	elseif msg == L["mc_trigger1"] or msg == L["mc_trigger2"] then
 		self:Sync(syncName.mindcontrol)
-	elseif msg == L["guardians_trigger"] then
-		self:Sync(syncName.guardians)
 	elseif msg == L["frostblast_trigger1"] then
 		self:Sync(syncName.frostblast)
 	end
@@ -418,8 +413,6 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 		self:Phase2()
 	elseif sync == syncName.phase3 then
 		self:Phase3()
-	elseif sync == syncName.guardians then
-		self:Guardians()
 	elseif sync == syncName.mindcontrol then
 		self:MindControl()
 	elseif sync == syncName.frostblast then
@@ -472,11 +465,25 @@ function module:Phase2()
 	if self.db.profile.proximity then
 		self:Proximity()
 	end
+
+	local function removeP1Bars()
+		self:RemoveBar(L["start_bar"])
+		self:RemoveBar(string.format(L["add_bar"], numWeavers, "Soul Weaver"))
+		self:RemoveBar(string.format(L["add_bar"], numAbominations, "Unstoppable Abomination"))
+	end
+	self:ScheduleEvent("bwKTremoveP1Bars", removeP1Bars, 1, self)
+
 end
 
 function module:Phase3()
 	if self.db.profile.phase then
 		self:Message(L["phase3_warning"], "Attention", nil, "Beware")
+	end
+	if self.db.profile.guardians then
+		self:Bar(string.format(L["guardians_bar"],1), timer.firstGuardians, icon.guardians)
+		for i = 0,3 do
+			self:DelayedBar(timer.firstGuardians+timer.guardians*i, string.format(L["guardians_bar"],i+2), timer.guardians, icon.guardians)
+		end
 	end
 end
 
@@ -486,17 +493,6 @@ function module:MindControl()
 		self:IntervalBar(L["mc_bar"], timer.mindcontrol[1], timer.mindcontrol[2], icon.mindcontrol)
 	end
 	self:KTM_Reset()
-end
-
-function module:Guardians()
-	if self.db.profile.guardians then
-		self:Message(L["guardians_warning"], "Important")
-		self:Bar(L["guardians_bar"], timer.firstGuardians, icon.guardians)
-		self:DelayedBar(timer.firstGuardians, L["guardians_bar"], timer.guardians, icon.guardians)
-		for i = 1,4 do
-			self:DelayedBar(timer.firstGuardians+timer.guardians*1, L["guardians_bar"], timer.guardians, icon.guardians)
-		end
-	end
 end
 
 function module:FrostBlast()

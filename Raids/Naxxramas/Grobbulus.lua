@@ -34,6 +34,7 @@ L:RegisterTranslations("enUS", function() return {
 	cloud_desc = "Warn for Poison Clouds",
 
 	inject_trigger = "^([^%s]+) ([^%s]+) afflicted by Mutating Injection",
+	inject_fade = "Mutating Injection fades from you",
 
 	you = "You",
 	are = "are",
@@ -110,6 +111,7 @@ function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE", "InjectEvent")
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_FRIENDLYPLAYER_DAMAGE", "InjectEvent")
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_PARTY_DAMAGE", "InjectEvent")
+	self:RegisterEvent("CHAT_MSG_SPELL_AURA_GONE_SELF")
 
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE", "CheckSpray")
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_PARTY_DAMAGE", "CheckSpray")
@@ -194,6 +196,11 @@ end
 ------------------------------
 --      Sync Handlers	    --
 ------------------------------
+function module:CHAT_MSG_SPELL_AURA_GONE_SELF(msg)
+	if string.find(msg, L["inject_fade"]) then
+		self:RemoveWarningSign(icon.inject)
+	end
+end
 
 function module:Inject(player)
 	if player then

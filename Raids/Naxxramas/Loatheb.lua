@@ -57,6 +57,32 @@ L:RegisterTranslations("enUS", function() return {
 	you = "You",
 	are = "are",
 	fungalBloom = "Fungal Bloom",
+
+	--LoathebTactical
+	graphic_cmd = "graphic",
+	graphic_name = "Graphical Icons",
+	graphic_desc = "When checked shows graphical icons",
+
+	sound_cmd = "sound",
+	sound_name = "Sound Effects",
+	sound_desc = "When checked plays sound effects",
+
+	consumable_cmd = "consumable",
+	consumable_name = "Do NOT warn raid to use consumables (A)",
+	consumable_desc = "When check does NOT warn raid to use consambles over raidwarn. Requires Assistance (A)",
+
+	shadowpot = "-- Drink Shadow Protection Potion ! --",
+	bandage = "-- Use your bandages ! --",
+	wrtorhs = "-- Healthstone or Whipper Root Tuber ! --",
+	shadowpotandbandage = "-- Drink Shadow Protection Potion and Bandage ! --",
+	noconsumable = "-- No Consumable at this time ! --",
+
+	soundshadowpot = "Interface\\Addons\\BigWigs\\Sounds\\potion.wav",
+	soundbandage = "Interface\\Addons\\BigWigs\\Sounds\\bandage.wav",
+	soundwrtorhs = "Interface\\Addons\\BigWigs\\Sounds\\healthstone.wav",
+	soundshadowpotandbandage = "Interface\\Addons\\BigWigs\\Sounds\\potionandbandage.wav",
+	soundgoforbuff = "Interface\\Addons\\BigWigs\\Sounds\\goforbuff.wav",
+
 } end )
 
 local LoathebDebuff = CreateFrame( "GameTooltip", "LoathebDebuff", nil, "GameTooltipTemplate" );
@@ -68,10 +94,10 @@ LoathebDebuff:SetOwner(WorldFrame, "ANCHOR_NONE")
 ---------------------------------
 
 -- module variables
-module.revision = 20003 -- To be overridden by the module!
+module.revision = 20004 -- To be overridden by the module!
 module.enabletrigger = module.translatedName -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
-module.toggleoptions = {"doom", --[["curse",]] "spore", "debuff", "bosskill"}
+module.toggleoptions = {"doom", --[["curse",]] "spore", "debuff", -1, "consumable", "graphic", "sound", "bosskill"}
 
 
 -- locals
@@ -98,7 +124,7 @@ local syncName = {
 	spore = "LoathebSporeSpawn"..module.revision,
 --curse = "LoathebRemoveCurse"..module.revision,
 }
-
+local consumableslist = {L["shadowpot"],L["noconsumable"],L["bandage"],L["wrtorhs"],L["shadowpotandbandage"],L["noconsumable"],L["bandage"],L["noconsumable"],L["wrtorhs"]}
 local numSpore = 0 -- how many spores have been spawned
 local numDoom = 0 -- how many dooms have been casted
 --local timeCurseWarning = 0
@@ -120,13 +146,48 @@ function module:OnEnable()
 	self:ThrottleSync(10, syncName.doom)
 	self:ThrottleSync(5, syncName.spore)
 	--self:ThrottleSync(5, syncName.curse)
+
+	self.consumableseq = 0
+
+	self.frameIcon = CreateFrame("Frame",nil,UIParent)
+
+	self.frameIcon:SetFrameStrata("MEDIUM")
+	self.frameIcon:SetWidth(100)
+	self.frameIcon:SetHeight(100)
+	self.frameIcon:SetAlpha(0.6)
+
+	self.frameTexture = self.frameIcon:CreateTexture(nil,"BACKGROUND")
+
+	self.frameTexture:SetTexture(nil)
+	self.frameTexture:SetAllPoints(self.frameIcon)
+
+	self.frameIcon:Hide()
+
+	self.frameIcon2 = CreateFrame("Frame",nil,UIParent)
+
+	self.frameIcon2:SetFrameStrata("MEDIUM")
+	self.frameIcon2:SetWidth(100)
+	self.frameIcon2:SetHeight(100)
+	self.frameIcon2:SetAlpha(0.6)
+
+	self.frameTexture2 = self.frameIcon2:CreateTexture(nil,"BACKGROUND")
+
+	self.frameTexture2:SetTexture(nil)
+	self.frameTexture2:SetAllPoints(self.frameIcon2)
+
+	self.frameIcon2:Hide()
+
 end
 
 -- called after module is enabled and after each wipe
 function module:OnSetup()
+	self.consumableseq = 0
 	numSpore = 0 -- how many spores have been spawned
 	numDoom = 0 -- how many dooms have been casted
 	timer.doom = timer.firstDoom
+
+	self.frameIcon:Hide()
+	self.frameIcon2:Hide()
 end
 
 -- called after boss is engaged
@@ -156,6 +217,8 @@ end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
 function module:OnDisengage()
+	self.frameIcon:Hide()
+	self.frameIcon2:Hide()
 end
 
 
@@ -183,6 +246,11 @@ end
 function module:BigWigs_RecvSync(sync, rest, nick)
 	if sync == syncName.doom and rest then
 		self:Doom(rest)
+		rest = tonumber(rest)
+		if rest == (self.consumableseq + 1) then
+			self:ScheduleEvent("bwloathebconsumable "..tostring(self.consumableseq), self.ConsumableWarning, 11, self)
+			self.consumableseq = self.consumableseq + 1
+		end
 		--elseif sync == syncName.curse then
 		--	self:Curse()
 	end
@@ -259,6 +327,58 @@ function module:CheckDebuff()
 				end
 			elseif ( buffName==nil ) then
 				break;
+			end
+		end
+	end
+end
+
+function module:ConsumableWarning()
+	if consumableslist[self.consumableseq] then
+		if not self.db.profile.consumable then
+			SendChatMessage(consumableslist[self.consumableseq], "RAID_WARNING")
+			SendChatMessage(consumableslist[self.consumableseq], "SAY")
+		end
+		if self.db.profile.graphic then
+			if consumableslist[self.consumableseq] == L["shadowpot"] then
+				self.frameTexture:SetTexture("Interface\\Icons\\INV_Potion_23") --greater shadow protection
+				self.frameTexture2:SetTexture(nil)
+			elseif consumableslist[self.consumableseq] == L["bandage"] then
+				self.frameTexture:SetTexture("Interface\\Icons\\INV_Misc_Bandage_12") -- heavy runecloth
+				self.frameTexture2:SetTexture(nil)
+			elseif consumableslist[self.consumableseq] == L["wrtorhs"] then
+				self.frameTexture:SetTexture("Interface\\Icons\\INV_Stone_04") -- healthstone
+				--self.frameTexture2:SetTexture("Interface\\Icons\\INV_Misc_Food_55") -- whipper root
+			elseif consumableslist[self.consumableseq] == L["shadowpotandbandage"] then
+				self.frameTexture:SetTexture("Interface\\Icons\\INV_Potion_23") --greater shadow protection
+				self.frameTexture2:SetTexture("Interface\\Icons\\INV_Misc_Bandage_12") -- heavy runecloth
+			elseif consumableslist[self.consumableseq] == L["noconsumable"] then
+				self.frameTexture:SetTexture(nil)
+				self.frameTexture2:SetTexture(nil)
+			end
+			self.frameIcon.texture = self.frameTexture
+			self.frameTexture:SetTexCoord(0.0,1.0,0.0,1.0)
+			self.frameIcon:SetPoint("CENTER",200,100)
+			self.frameIcon:Show()
+
+			self.frameIcon2.texture = self.frameTexture2
+			self.frameTexture2:SetTexCoord(0.0,1.0,0.0,1.0)
+			self.frameIcon2:SetPoint("CENTER",200,0)
+			self.frameIcon2:Show()
+
+			self:ScheduleEvent(function()
+				self.frameIcon:Hide()
+				self.frameIcon2:Hide()
+			end, 5)
+		end
+		if self.db.profile.sound then
+			if consumableslist[self.consumableseq] == L["shadowpot"] then
+				PlaySoundFile(L["soundshadowpot"])
+			elseif consumableslist[self.consumableseq] == L["bandage"] then
+				PlaySoundFile(L["soundbandage"])
+			elseif consumableslist[self.consumableseq] == L["wrtorhs"] then
+				PlaySoundFile(L["soundwrtorhs"])
+			elseif consumableslist[self.consumableseq] == L["shadowpotandbandage"] then
+				PlaySoundFile(L["soundshadowpotandbandage"])
 			end
 		end
 	end

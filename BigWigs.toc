@@ -83,10 +83,10 @@ Plugins\DousedRunes.lua
 Plugins\Enrage.lua
 Plugins\Ignite.lua
 #Plugins\Combat.lua
-Plugins\Farclip.lua
 Plugins\WorldBuffTimers.lua
 Plugins\ScorchTimer.lua
 Plugins\FRBuffMacro.lua
+Plugins\Farclip.lua
 
 Raids\ZG\Arlokk.lua
 Raids\ZG\Jeklik.lua
