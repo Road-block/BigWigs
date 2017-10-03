@@ -487,7 +487,6 @@ function BigWigsBars:BigWigs_StartBar(module, text, time, icon, otherc, c1, c2, 
 	local bc, balpha, txtc
 	if BigWigsColors and type(BigWigsColors) == "table" then
 		if type(otherc) ~= "boolean" or not otherc then c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = BigWigsColors:BarColor(time) end
-		bc, balpha, txtc = BigWigsColors.db.profile.bgc, BigWigsColors.db.profile.bga, BigWigsColors.db.profile.txtc
 	end
 
 	local groupId = self.frames.anchor.candyBarGroupId
@@ -536,11 +535,16 @@ function BigWigsBars:BigWigs_StartBar(module, text, time, icon, otherc, c1, c2, 
 	self:RegisterCandyBarWithGroup(id, groupId)
 	self:SetCandyBarTexture(id, surface:Fetch(self.db.profile.texture))
 
-	if type(colorModule) == "table" then
-		local bg = colorModule.db.profile.barBackground
-		self:SetCandyBarBackgroundColor(id, bg.r, bg.g, bg.b, bg.a)
-		local txt = colorModule.db.profile.barTextColor
-		self:SetCandyBarTextColor(id, txt.r, txt.g, txt.b, txt.a)
+	if type(BigWigsColors) == "table" then
+		local bg = BigWigsColors.db.profile.bgc
+		local bga = BigWigsColors.db.profile.bga
+		if bg and bga then
+			self:SetCandyBarBackgroundColor(id, bg, bga)
+		end
+		local txt = BigWigsColors.db.profile.txtc
+		if txt then
+			self:SetCandyBarTextColor(id, txt)
+		end
 	end
 
 	if type(self.db.profile.width) == "number" then

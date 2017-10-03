@@ -174,7 +174,7 @@ L:RegisterTranslations("deDE", function() return {
 
 -- module variables
 local controller = AceLibrary("Babble-Boss-2.2")["Grethok the Controller"]
-module.revision = 20004 -- To be overridden by the module!
+module.revision = 20005 -- To be overridden by the module!
 module.enabletrigger = {module.translatedName, controller} -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
 module.toggleoptions = {"phase", "mobs", "eggs", "polymorph", "mc", "icon", "orb", "fireballvolley", "conflagration", "bosskill"}
@@ -185,10 +185,10 @@ local timer = {
 	mobspawn = 46,
 	mc = 15,
 	polymorph = 20,
-	conflagrate = 15,
+	conflagrate = 14,
 	firstConflagrate = 12,
-	firstVolley = 7,
-	firstWarStomp = 22,
+	firstVolley = 6,
+	firstWarStomp = 21,
 	volley = 2,
 	egg = 3,
 	orb = 90,
@@ -202,8 +202,8 @@ local icon = {
 local syncName = {
 	egg = "RazorgoreEgg"..module.revision,
 	eggStart = "RazorgoreEggStart"..module.revision,
-	orb = "RazorgoreOrbStart_"..module.revision, -- 19 characters
-	orbOver = "RazorgoreOrbStop_"..module.revision,
+	orb = "RazorgoreOrbStart"..module.revision,
+	orbOver = "RazorgoreOrbStop"..module.revision,
 	volley = "RazorgoreVolleyCast"..module.revision,
 	phase2 = "RazorgorePhaseTwo"..module.revision,
 }
@@ -232,8 +232,8 @@ function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_MONSTER_EMOTE")
 
 	self:ThrottleSync(5, syncName.egg)
-	self:ThrottleSync(5, syncName.orb .. "(.+)")
-	self:ThrottleSync(5, syncName.orbOver .. "(.+)")
+	self:ThrottleSync(5, syncName.orb)
+	self:ThrottleSync(5, syncName.orbOver)
 	self:ThrottleSync(3, syncName.volley)
 end
 
@@ -244,10 +244,14 @@ function module:OnSetup()
 	self.phase          = 0
 	self.previousorb    = nil
 	self.eggs           = 0
+	self.freetime		= 0
+	self.orbOverTime 	= 0
 end
 
 -- called after boss is engaged
 function module:OnEngage()
+	self.orbOverTime = GetTime()
+	self.freetime = 0
 	if self.db.profile.phase then
 		self:Message(L["start_message"], "Attention")
 	end
@@ -345,9 +349,9 @@ function module:Events(msg)
 
 	if self.db.profile.orb then
 		if orbother then
-			self:Sync(syncName.orb .. orbother)
+			self:Sync(syncName.orb .." ".. orbother)
 		elseif msg == L["orbcontrolyou_trigger"] then
-			self:Sync(syncName.orb .. UnitName("player"))
+			self:Sync(syncName.orb .." ".. UnitName("player"))
 		end
 	end
 
@@ -414,8 +418,11 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 			self:Bar(L["egg_bar"], timer.egg, icon.egg, true, "purple")
 		end
 		self:Sync(syncName.egg .. " " .. tostring(self.eggs + 1))
-	elseif string.find(sync, syncName.orb) then
-		rest = string.sub(sync, 24)
+	elseif sync == syncName.orb then
+		if self.orbOverTime then
+			self.freetime = self.freetime + GetTime() - self.orbOverTime
+			self.orbOverTime = 0
+		end
 		self:CancelScheduledEvent("destroyegg_check")
 		self:CancelScheduledEvent("orbcontrol_check")
 		if self.db.profile.orb then
@@ -425,13 +432,14 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 			self:Bar(string.format(L["orb_bar"], rest), timer.orb, icon.orb, true, "white")
 			self:SetCandyBarOnClick("BigWigsBar "..string.format(L["orb_bar"], rest), function(name, button, extra) TargetByName(extra, true) end, rest)
 		end
-		self:ScheduleEvent("orbcontrol_check", self.OrbControlCheck, 1, self)
+		self:ScheduleEvent("orbcontrol_check", self.OrbControlCheck, 0.5, self)
 		self.previousorb = rest
-	elseif string.find(sync, syncName.orbOver) then
+	elseif sync == syncName.orbOver then
+		self.orbOverTime = GetTime()
 		self:CancelScheduledEvent("destroyegg_check")
 		self:CancelScheduledEvent("orbcontrol_check")
 		if self.db.profile.orb and self.previousorb then
-			self:Bar(string.format(L["orb_bar"], self.previousorb), timer.orb, icon.orb, true, "white")
+			self:RemoveBar(string.format(L["orb_bar"], self.previousorb))
 		end
 		if self.db.profile.fireballvolley then
 			self:RemoveBar(L["volley_bar"])
@@ -457,9 +465,10 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 			self:Message(L["phase2_message"], "Attention")
 		end
 		self:TriggerEvent("BigWigs_StopCounterBar", self, "Eggs destroyed")
-		self:Bar(L["conflagration_bar"], timer.firstConflagrate, "Spell_Fire_Incinerate", true, "red")
-		self:Bar(L["volley_bar"], timer.firstVolley, icon.volley, true, "blue")
-		self:Bar(L["warstomp_bar"], timer.firstWarStomp, "Ability_BullRush")
+		self:Bar(L["conflagration_bar"], timer.firstConflagrate-self.freetime, "Spell_Fire_Incinerate", true, "red")
+		self:Bar(L["volley_bar"], timer.firstVolley-self.freetime, icon.volley, true, "blue")
+		DEFAULT_CHAT_FRAME:AddMessage("self.freetime: "..self.freetime );
+		self:Bar(L["warstomp_bar"], timer.firstWarStomp-self.freetime, "Ability_BullRush")
 
 		self:KTM_SetTarget(self.translatedName)
 		self:KTM_Reset()
@@ -479,9 +488,9 @@ function module:OrbControlCheck()
 		end
 	end
 	if bosscontrol then
-		self:ScheduleEvent("orbcontrol_check", self.OrbControlCheck, 1, self)
+		self:ScheduleEvent("orbcontrol_check", self.OrbControlCheck, 0.5, self)
 	elseif GetRealZoneText() == "Blackwing Lair" then
-		self:Sync(syncName.orbOver .. self.previousorb)
+		self:Sync(syncName.orbOver)
 	end
 end
 

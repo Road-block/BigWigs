@@ -64,8 +64,8 @@ BigWigsFarclip.consoleOptions = {
 			max = 777,
 			step = 60,
 			get = function() return BigWigsFarclip.db.profile.defaultFarclip end,
-			set = function(v) 
-				BigWigsFarclip.db.profile.defaultFarclip = v 
+			set = function(v)
+				BigWigsFarclip.db.profile.defaultFarclip = v
 				SetCVar("farclip", v)
 			end,
 		},

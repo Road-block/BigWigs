@@ -55,7 +55,7 @@ L:RegisterTranslations("enUS", function() return {
 
 	["Show popup"] = true,
 	["Show popup warning on out of date version"] = true,
-	
+
 } end )
 
 L:RegisterTranslations("deDE", function() return {

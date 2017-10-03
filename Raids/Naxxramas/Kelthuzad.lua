@@ -114,7 +114,7 @@ L:RegisterTranslations("enUS", function() return {
 
 	frostblast_bar = "Possible Frost Blast",
 	frostblast_trigger1 = "I will freeze the blood in your veins!",
-	frostblast_trigger2 = "afflicted by Frost Blast",
+	frostblast_trigger2 = "^([^%s]+) ([^%s]+) afflicted by Frost Blast.",
 	frostblast_warning = "Frost Blast!",
 	frostblast_soon_message = "Possible Frost Blast in ~5sec!",
 
@@ -233,7 +233,7 @@ function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_PARTY_DAMAGE", "Affliction")
 
 	self:ThrottleSync(5, syncName.detonate)
-	self:ThrottleSync(5, syncName.frostblast)
+	self:ThrottleSync(0, syncName.frostblast)
 	self:ThrottleSync(2, syncName.frostbolt)
 	self:ThrottleSync(2, syncName.frostboltOver)
 	self:ThrottleSync(2, syncName.fissure)
@@ -249,10 +249,12 @@ function module:OnSetup()
 
 	self.warnedAboutPhase3Soon = nil
 	frostbolttime = 0
+	self.lastFrostBlast=0
 end
 
 -- called after boss is engaged
 function module:OnEngage()
+	self.lastFrostBlast=0
 	self:Message(L["start_warning"], "Attention")
 	self:Bar(L["start_bar"], timer.phase1, icon.phase1)
 	self:DelayedMessage(timer.phase1 - 20, L["phase1_warn"], "Important")
@@ -264,11 +266,13 @@ function module:OnEngage()
 		self:Bar(string.format(L["add_bar"], numAbominations, "Unstoppable Abomination"), timer.phase1, icon.abomination)
 		self:Bar(string.format(L["add_bar"], numWeavers, "Soul Weaver"), timer.phase1, icon.soulWeaver)
 	end
+	self:KTM_SetTarget("Unstoppable Abomination")
 end
 
 -- called after boss is disengaged (wipe(retreat) or victory)
 function module:OnDisengage()
 	self:RemoveProximity()
+	BigWigsFrostBlast:FBClose()
 end
 
 
@@ -307,8 +311,8 @@ function module:CHAT_MSG_MONSTER_YELL(msg)
 		self:Sync(syncName.phase3)
 	elseif msg == L["mc_trigger1"] or msg == L["mc_trigger2"] then
 		self:Sync(syncName.mindcontrol)
-	elseif msg == L["frostblast_trigger1"] then
-		self:Sync(syncName.frostblast)
+		--elseif msg == L["frostblast_trigger1"] then
+		--	self:Sync(syncName.frostblast)
 	end
 end
 
@@ -335,8 +339,13 @@ end
 self:Bar(L["frostbolt_volley"], 15, icon.frostboltVolley)
 end]]
 function module:Affliction(msg)
-	if string.find(msg, L["frostblast_trigger2"]) then
-		self:Sync(syncName.frostblast)
+	local _, _, sPlayer, sType = string.find(msg, L["frostblast_trigger2"])
+	if ( sPlayer and sType ) then
+		if ( sPlayer == "You" and sType == "are" ) then
+			self:Sync(syncName.frostblast.." "..UnitName("player"))
+		else
+			self:Sync(syncName.frostblast.." "..sPlayer)
+		end
 	end
 
 	if string.find(msg, L["detonate_trigger"]) then
@@ -416,7 +425,7 @@ function module:BigWigs_RecvSync(sync, rest, nick)
 	elseif sync == syncName.mindcontrol then
 		self:MindControl()
 	elseif sync == syncName.frostblast then
-		self:FrostBlast()
+		self:FrostBlast(rest)
 	elseif sync == syncName.detonate and rest then
 		self:Detonate()
 	elseif sync == syncName.frostbolt then       -- changed from only frostbolt (thats only alert, if someone still wants to see the bar, it wouldnt work then)
@@ -463,8 +472,9 @@ function module:Phase2()
 
 	-- proximity silent
 	if self.db.profile.proximity then
-		self:Proximity()
+		self:ScheduleEvent("bwShowProximity", self.Proximity, timer.phase2, self)
 	end
+	self:ScheduleEvent("bwShowFBFrame", function() BigWigsFrostBlast:FBShow() end, timer.phase2, self)
 
 	local function removeP1Bars()
 		self:RemoveBar(L["start_bar"])
@@ -495,11 +505,17 @@ function module:MindControl()
 	self:KTM_Reset()
 end
 
-function module:FrostBlast()
+function module:FrostBlast(name)
 	if self.db.profile.frostblast then
-		self:Message(L["frostblast_warning"], "Attention")
-		self:DelayedMessage(timer.frostblast[1] - 5, L["frostblast_soon_message"])
-		self:IntervalBar(L["frostblast_bar"], timer.frostblast[1], timer.frostblast[2], icon.frostblast)
+		if GetTime()-self.lastFrostBlast>5 then
+			self.lastFrostBlast=GetTime()
+			self:Message(L["frostblast_warning"], "Attention")
+			self:DelayedMessage(timer.frostblast[1] - 5, L["frostblast_soon_message"])
+			self:IntervalBar(L["frostblast_bar"], timer.frostblast[1], timer.frostblast[2], icon.frostblast)
+		end
+	end
+	if name and name ~= "" then
+		BigWigsFrostBlast:AddFrostBlastTarget(name)
 	end
 end
 
@@ -548,6 +564,7 @@ function module:AbominationDies(name)
 			self:Bar(string.format(L["add_bar"], numAbominations, name), (timePhase1Start + timer.phase1 - GetTime()), icon.abomination)
 		end
 	end
+	self:KTM_Reset()
 end
 
 function module:WeaverDies(name)

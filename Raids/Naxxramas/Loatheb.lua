@@ -31,6 +31,10 @@ L:RegisterTranslations("enUS", function() return {
 	debuff_name = "Spore Debuff",
 	debuff_desc = "Show icon when your spore debuff is running out",
 
+	groups_cmd = "groups",
+	groups_name = "Spore groups",
+	groups_desc = "Disable to show group numbers on spore timer (7 Group tactic)",
+
 	doombar = "Inevitable Doom %d",
 	doomwarn = "Inevitable Doom %d! %d sec to next!",
 	doomwarn5sec = "Inevitable Doom %d in 5 sec!",
@@ -52,7 +56,8 @@ L:RegisterTranslations("enUS", function() return {
 	startwarn = "Loatheb engaged, 2 min to Inevitable Doom!",
 
 	--sporewarn = "Spore spawned",
-	sporebar = "Next Spore",
+	sporebar = "Next Spore %d",
+	sporebar_group = "Next Spore - Group %d",
 
 	you = "You",
 	are = "are",
@@ -97,7 +102,7 @@ LoathebDebuff:SetOwner(WorldFrame, "ANCHOR_NONE")
 module.revision = 20004 -- To be overridden by the module!
 module.enabletrigger = module.translatedName -- string or table {boss, add1, add2}
 --module.wipemobs = { L["add_name"] } -- adds which will be considered in CheckForEngage
-module.toggleoptions = {"doom", --[["curse",]] "spore", "debuff", -1, "consumable", "graphic", "sound", "bosskill"}
+module.toggleoptions = {"doom", --[["curse",]] "spore", "groups", "debuff", -1, "consumable", "graphic", "sound", "bosskill"}
 
 
 -- locals
@@ -302,7 +307,14 @@ function module:Spore()
 
 	if self.db.profile.spore then
 		--self:Message(string.format(L["sporewarn"], numSpore), "Important")
-		self:Bar(string.format(L["sporebar"], numSpore), timer.spore, icon.spore)
+		if not self.db.profile.groups then
+			self:Bar(string.format(L["sporebar_group"], numSpore), timer.spore, icon.spore)
+			if numSpore == 7 then
+				numSpore = 0
+			end
+		else
+			self:Bar(string.format(L["sporebar"], numSpore), timer.spore, icon.spore)
+		end
 	end
 end
 

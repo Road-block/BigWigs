@@ -45,7 +45,7 @@ L:RegisterTranslations("enUS", function() return {
 	marktrigger3 = "is afflicted by Mark of Blaumeux",
 	marktrigger4 = "is afflicted by Mark of Mograine",
 
-	voidtrigger = "Lady Blaumeux casts Void Zone.",
+	voidtrigger = "Your life is mine!",
 	voidwarn = "Void Zone Incoming",
 	voidbar = "Void Zone",
 
@@ -114,7 +114,7 @@ local times = nil
 -- called after module is enabled
 function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_CREATURE_BUFFS")
-	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
+	self:RegisterEvent("CHAT_MSG_MONSTER_SAY")
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE", "SkillEvent")
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_PARTY_DAMAGE", "SkillEvent")
 	self:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE", "MarkEvent")
@@ -177,8 +177,6 @@ function module:SkillEvent(msg)
 		self:Sync(syncName.meteor)
 	elseif string.find(msg, L["wrathtrigger"]) then
 		self:Sync(syncName.wrath)
-	elseif msg == L["voidtrigger"] then
-		self:Sync(syncName.void)
 	end
 end
 
@@ -189,9 +187,9 @@ function module:CHAT_MSG_SPELL_PERIODIC_CREATURE_BUFFS( msg )
 	end
 end
 
-function module:CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF(msg)
-	if msg == L["voidtrigger"] then
-		self:Sync(syncName.void )
+function module:CHAT_MSG_MONSTER_SAY(msg)
+	if string.find(msg, L["voidtrigger"]) then
+		self:Sync(syncName.void)
 	end
 end
 

@@ -5,7 +5,7 @@
 
 local module, L = BigWigs:ModuleDeclaration("King Gordok", "Dire Maul")
 
-module.revision = 20001
+module.revision = 20002
 module.enabletrigger = module.translatedName
 module.toggleoptions = {"stomp", "ms", "charge", "bosskill"}
 
@@ -15,26 +15,26 @@ module.toggleoptions = {"stomp", "ms", "charge", "bosskill"}
 
 local timer = {
 	firstWarStomp = 7,
-	secondWarStomp = 27,
-	secondWarStompMax = 38,
-	warStomp = 20,
-	warStompMax = 30,
+	secondWarStomp = {27,38},
+	warStomp = {20,30},
 
-	firstMortalStrike = 15,
-	firstMortalStrikeMax = 25,
-	mortalStrike = 12,
-	mortalStrikeMax = 20,
+	firstMortalStrike = {15,25},
+	mortalStrike = {12,20},
 
-	secondCharge = 34,
-	secondChargeMax = 42,
-	charge = 25,
-	chargeMax = 30,
+	secondCharge = {34,42},
+	charge = {25,30},
 }
 
 local icon = {
 	warStomp = "Ability_WarStomp",
 	mortalStrike = "Ability_Warrior_SavageBlow",
 	charge = "Ability_Warrior_Charge",
+}
+
+local syncName = {
+	warStomp = "gordokWarStomp"..module.revision,
+	mortalStrike = "gordokMortalStrike"..module.revision,
+	charge = "gordokCharge"..module.revision,
 }
 
 local lastWarStomp = 0
@@ -61,6 +61,11 @@ L:RegisterTranslations("enUS", function() return {
 
 	-- AceConsole strings
 	cmd = "Gordok",
+
+	warStomp_bar = "War Stomp",
+	warStomp2_bar = "2nd War Stomp",
+	ms_bar = "Mortal Strike",
+	charge_bar = "Charge",
 
 } end )
 
@@ -94,7 +99,9 @@ function module:OnEnable()
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE", "Event")
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_PARTY_DAMAGE", "Event")
 	self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE", "Event")
-	--self:ThrottleSync(2, syncName.debuff)
+	self:ThrottleSync(5, syncName.warStomp)
+	self:ThrottleSync(5, syncName.mortalStrike)
+	self:ThrottleSync(5, syncName.charge)
 end
 
 -- called after module is enabled and after each wipe
@@ -108,19 +115,16 @@ end
 -- called after boss is engaged
 function module:OnEngage()
 	if self.db.profile.stomp then
-		self:Bar("1st War Stomp (+1s)", timer.firstWarStomp, icon.warStomp, true, "Red")
+		self:Bar(L["warStomp_bar"], timer.firstWarStomp, icon.warStomp, true, "Red")
 	end
 	if self.db.profile.stomp then
-		self:Bar("2nd War Stomp", timer.secondWarStomp, icon.warStomp, true, "Red")
-		self:Bar("2nd War Stomp MAX", timer.secondWarStompMax, icon.warStomp, true, "Red")
+		self:IntervalBar(L["warStomp2_bar"], timer.secondWarStomp[1], timer.secondWarStomp[2], icon.warStomp, true, "Red")
 	end
 	if self.db.profile.ms then
-		self:Bar("1st Mortal Strike", timer.firstMortalStrike, icon.mortalStrike, true, "Black")
-		self:Bar("1st Mortal Strike MAX", timer.firstMortalStrikeMax, icon.mortalStrike, true, "Black")
+		self:IntervalBar(L["ms_bar"], timer.firstMortalStrike[1], timer.firstMortalStrike[2], icon.mortalStrike, true, "Black")
 	end
 	if self.db.profile.charge then
-		self:Bar("OMG CHARGE SOON", timer.secondCharge, icon.charge, true, "Yellow") -- change name here and in event handlers (x2)
-		self:Bar("Charge MAX", timer.secondChargeMax, icon.charge, true, "Yellow")
+		self:IntervalBar(L["charge_bar"], timer.secondCharge[1], timer.secondCharge[2], icon.charge, true, "Yellow") -- change name here and in event handlers (x2)
 	end
 end
 
@@ -133,34 +137,26 @@ end
 ------------------------------
 
 function module:Event(msg)
-	if string.find(msg, "War Stomp") and self.db.profile.stomp then
-		if GetTime() - lastWarStomp > 5 then
-			self:TriggerEvent("BigWigs_StopBar", self, "1st War Stomp (+1s)")
-			self:TriggerEvent("BigWigs_StopBar", self, "War Stomp")
-			self:TriggerEvent("BigWigs_StopBar", self, "War Stomp MAX")
-			self:TriggerEvent("BigWigs_StopBar", self, "2nd War Stomp")
-			self:TriggerEvent("BigWigs_StopBar", self, "2nd War Stomp MAX")
-			self:Bar("War Stomp", timer.warStomp, icon.warStomp, true, "Red")
-			self:Bar("War Stomp MAX", timer.warStompMax, icon.warStomp, true, "Red")
-		end
-		lastWarStomp = GetTime()
-	elseif string.find(msg, "Mortal Strike") and self.db.profile.ms then
-		if GetTime() - lastMortalStrike > 5 then
-			self:TriggerEvent("BigWigs_StopBar", self, "1st Mortal Strike")
-			self:TriggerEvent("BigWigs_StopBar", self, "1st Mortal Strike MAX")
-			self:TriggerEvent("BigWigs_StopBar", self, "Mortal Strike ")
-			self:TriggerEvent("BigWigs_StopBar", self, "Mortal Strike MAX")
-			self:Bar("Mortal Strike", timer.mortalStrike, icon.mortalStrike, true, "Black")
-			self:Bar("Mortal Strike MAX", timer.mortalStrikeMax, icon.mortalStrike, true, "Black")
-		end
-		lastMortalStrike = GetTime()
-	elseif string.find(msg, "Charge") and self.db.profile.charge then
-		if GetTime() - lastCharge > 5 then
-			self:TriggerEvent("BigWigs_StopBar", self, "OMG CHARGE SOON")
-			self:TriggerEvent("BigWigs_StopBar", self, "Charge MAX")
-			self:Bar("OMG CHARGE SOON", timer.charge, icon.charge, true, "Yellow")
-			self:Bar("Charge MAX", timer.chargeMax, icon.charge, true, "Yellow")
-		end
-		lastCharge = GetTime()
+	if string.find(msg, "War Stomp") then
+		self:Sync(syncName.warStomp)
+	elseif string.find(msg, "Mortal Strike") then
+		self:Sync(syncName.mortalStrike)
+	elseif string.find(msg, "Charge") then
+		self:Sync(syncName.charge)
+	end
+end
+
+------------------------------
+--      Synchronization	    --
+------------------------------
+
+function module:BigWigs_RecvSync( sync, rest, nick )
+	if sync == syncName.warStomp and self.db.profile.stomp then
+		self:RemoveBar(L["warStomp2_bar"])
+		self:IntervalBar(L["warStomp_bar"], timer.warStomp[1], timer.warStomp[2], icon.warStomp, true, "Red")
+	elseif sync == syncName.mortalStrike and self.db.profile.ms then
+		self:IntervalBar(L["ms_bar"], timer.mortalStrike[1], timer.mortalStrike[2], icon.mortalStrike, true, "Black")
+	elseif sync == syncName.charge and self.db.profile.charge then
+		self:IntervalBar(L["charge_bar"], timer.charge[1], timer.charge[2], icon.charge, true, "Yellow")
 	end
 end
