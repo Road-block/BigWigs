@@ -248,13 +248,16 @@ function BigWigsFrostBlast:AddFrostBlastTarget(name)
 	if not BigWigsFrostBlast.db.profile.disabled then
 		local check
 		for k, v in FrostblastTargets do
-			if UnitName(v[1]) == name then
+			if UnitName(v) == name then
 				check = true
 			end
 		end
 		if not check then
-			tinsert(FrostblastTargets,{self:FindPlayerUnitByName(name),0});
-			self:FrostBlastUpdate()
+			local unit = self:FindPlayerUnitByName(name)
+			if unit then
+				tinsert(FrostblastTargets,unit);
+				self:FrostBlastUpdate()
+			end
 		end
 		self:ScheduleEvent("bwStopFrostBlastUpdate", self.StopFrostBlastUpdate, 6, self)
 	end
@@ -264,12 +267,9 @@ function BigWigsFrostBlast:FrostBlastUpdate()
 	if not BigWigsFrostBlast.db.profile.disabled then
 		if not anchor then self:SetupFrames() anchor:Show() end
 		local numEntries = getn(FrostblastTargets)
-		for k, v in FrostblastTargets do
-			v[2]=UnitHealth(v[1]);
-		end
 		for i=1,4 do
 			if i<=numEntries then
-				anchor.bar[i].unit=FrostblastTargets[i][1];
+				anchor.bar[i].unit=FrostblastTargets[i];
 				anchor.bar[i].status:SetScript("OnUpdate", self.OnUpdate)
 				anchor.bar[i]:Show()
 			else
